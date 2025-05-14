@@ -7,10 +7,18 @@
 // You touch this, and you die.
 %define api.value.union.name SemanticValue
 
+
+
+
+
+
 %union {
 	/** Terminals. */
 
 	int integer;
+	char* identifier;
+	char bool;
+	float float; 
 	Token token;
 
 	/** Non-terminals. */
@@ -20,6 +28,11 @@
 	Factor * factor;
 	Program * program;
 }
+
+
+
+
+
 
 /**
  * Destructors. This functions are executed after the parsing ends, so if the
@@ -33,22 +46,90 @@
 %destructor { releaseExpression($$); } <expression>
 %destructor { releaseFactor($$); } <factor>
 
+
+
+
+
+
+
+
 /** Terminals. */
-%token <integer> INTEGER
+
+%token <token> SUB
 %token <token> ADD
-%token <token> CLOSE_PARENTHESIS
 %token <token> DIV
 %token <token> MUL
-%token <token> OPEN_PARENTHESIS
-%token <token> SUB
+%token <token> MOD
+%token <token> INCREMENT
+%token <token> DECREMENT
+
+%token <token> LEFTBRACE
+%token <token> RIGHTBRACE
+%token <token> LEFTPARENTHESIS
+%token <token> RIGHTPARENTHESIS
+
+%token <token> COMMA
+%token <token> SEMICOLON
+
+%token <token> EQ
+%token <token> NEQ
+%token <token> LEQ
+%token <token> GEQ
+%token <token> LT
+%token <token> GT
+%token <token> AND
+%token <token> OR
+%token <token> NOT
+
+%token <token> SEM
+%token <token> THREAD
+%token <token> FUNCTION
+%token <token> MAIN
+%token <token> UP
+%token <token> DOWN
+
+%token <token> IF
+%token <token> ELSE 
+%token <token> WHILE
+%token <token> FOR
+%token <token> FOREVER
+
+%token <token> PRINT
+%token <token> SLEEP
+%token <token> RETURN
+
+%token <integer> INT
+%token <float> FLOAT
+%token <bool> BOOL
+%token <token> STRING
+
+%token <bool> TRUE
+%token <bool> FALSE
 
 %token <token> UNKNOWN
 
-/** Non-terminals. */
+
+
+
+
+
+
+
+/** Non-terminals. **/ // tipos de dato para los no terminales generados por bison (ni idea comment de mr miz)
 %type <constant> constant
 %type <expression> expression
 %type <factor> factor
 %type <program> program
+// TODO (%type)
+
+
+
+
+
+
+
+
+
 
 /**
  * Precedence and associativity.
@@ -57,6 +138,18 @@
  */
 %left ADD SUB
 %left MUL DIV
+%right NOT
+// TODO: ver temas de asociatividad y precedencia de lo que definimos
+
+
+
+
+
+
+
+
+
+
 
 %%
 
@@ -78,5 +171,54 @@ factor: OPEN_PARENTHESIS expression CLOSE_PARENTHESIS				{ $$ = ExpressionFactor
 
 constant: INTEGER													{ $$ = IntegerConstantSemanticAction($1); }
 	;
+
+
+
+// NUEVO
+program:
+    expression {
+        printf("AST generado para la expresión\n");
+        // Acción para manejar el AST final
+    }
+;
+
+expression:
+    term {
+        $$ = $1;  // Nodo raíz de la expresión es el término
+    }
+    | expression ADD term {
+        $$ = createBinaryOpNode("+", $1, $3);  // Nodo con operador "+"
+    }
+    | expression SUB term {
+        $$ = createBinaryOpNode("-", $1, $3);  // Nodo con operador "-"
+    }
+;
+
+term:
+    factor {
+        $$ = $1;  // Nodo raíz del factor
+    }
+    | term MUL factor {
+        $$ = createBinaryOpNode("*", $1, $3);  // Nodo con operador "*"
+    }
+    | term DIV factor {
+        $$ = createBinaryOpNode("/", $1, $3);  // Nodo con operador "/"
+    }
+;
+
+factor:
+    INTEGER {
+        $$ = createConstantNode($1);  // Nodo constante para un entero
+    }
+    | ID {
+        $$ = createIdentifierNode($1);  // Nodo para un identificador
+    }
+    | OPEN_PARENTHESIS expression CLOSE_PARENTHESIS {
+        $$ = $2;  // Si es una expresión entre paréntesis, usar la expresión interna
+    }
+;
+
+%%
+
 
 %%
