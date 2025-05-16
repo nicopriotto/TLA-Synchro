@@ -17,8 +17,9 @@
 
 	int integer;
 	char* identifier;
-	char bool;
+	boolean boolean;
 	float float; 
+    String string;
 	Token token;
 
 	/** Non-terminals. */
@@ -50,9 +51,6 @@
 
 
 
-
-
-
 /** Terminals. */
 
 %token <token> SUB
@@ -63,25 +61,24 @@
 %token <token> INCREMENT
 %token <token> DECREMENT
 
-%token <token> LEFTBRACE
-%token <token> RIGHTBRACE
-%token <token> LEFTPARENTHESIS
-%token <token> RIGHTPARENTHESIS
+%token <token> LEFT_BRACE
+%token <token> RIGHT_BRACE
+%token <token> LEFT_PARENTHESIS
+%token <token> RIGH_TPARENTHESIS
 
 %token <token> COMMA
 %token <token> SEMICOLON
 
-%token <token> EQ
-%token <token> NEQ
-%token <token> LEQ
-%token <token> GEQ
-%token <token> LT
-%token <token> GT
+%token <token> EQUALS
+%token <token> NOT_EQUALS
+%token <token> LOWER_EQUALS
+%token <token> GREATER_EQUALS
+%token <token> LOWER_THAN
+%token <token> GREATER_THAN
 %token <token> AND
 %token <token> OR
 %token <token> NOT
 
-%token <token> SEM
 %token <token> THREAD
 %token <token> FUNCTION
 %token <token> MAIN
@@ -98,13 +95,19 @@
 %token <token> SLEEP
 %token <token> RETURN
 
-%token <integer> INT
+%token <integer> INTEGER
 %token <float> FLOAT
-%token <bool> BOOL
-%token <token> STRING
+%token <boolean> BOOLEAN
+%token <string> STRING
 
-%token <bool> TRUE
-%token <bool> FALSE
+%token <token> INTEGER_DECLARATION
+%token <token> FLOAT_DECLARATION
+%token <token> BOOLEAN_DECLARATION
+%token <token> STRING_DECLARATION
+%token <token> SEM_DECLARATION
+
+%token <identifier> IDENTIFIER
+%token <token> NEWLINE
 
 %token <token> UNKNOWN
 

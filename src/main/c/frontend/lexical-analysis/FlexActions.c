@@ -111,11 +111,17 @@ Token StringLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
 	return STRING;
 }
 
-Token BooleanLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, Token token) {
+Token BooleanLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
 	_logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
-	lexicalAnalyzerContext->semanticValue->boolean = (token == TRUE);
+
+	if (strcmp(lexicalAnalyzerContext->lexeme, "true") == 0) {
+		lexicalAnalyzerContext->semanticValue->boolean = true;
+	} else {
+		lexicalAnalyzerContext->semanticValue->boolean = false;
+	}
+
 	destroyLexicalAnalyzerContext(lexicalAnalyzerContext);
-	return token;
+	return BOOLEAN;
 }
 
 Token FloatLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
