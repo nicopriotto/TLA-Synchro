@@ -7,32 +7,25 @@
 // You touch this, and you die.
 %define api.value.union.name SemanticValue
 
-
-
-
-
-
 %union {
-	/** Terminals. */
+    int integer;
+    char* identifier;
+    bool boolean;
+    float floatVal;
+    char* string;
+    Token token;
 
-	int integer;
-	char* identifier;
-	boolean boolean;
-	float float; 
-    String string;
-	Token token;
-
-	/** Non-terminals. */
-
-	Constant * constant;
-	Expression * expression;
-	Factor * factor;
-	Program * program;
+    Expression* expression;
+    Statement* statement;
+    StatementList* statementList;
+    Condition* condition;
+    ParameterList* parameterList;
+    ArgumentList* argumentList;
+    Program* program;
+    Declaration* declaration;
+    DeclarationList* declarationList;
+    TypeNode* typeNode;
 }
-
-
-
-
 
 
 /**
@@ -43,12 +36,8 @@
  *
  * @see https://www.gnu.org/software/bison/manual/html_node/Destructor-Decl.html
  */
-%destructor { releaseConstant($$); } <constant>
+ // TODO: Hacer
 %destructor { releaseExpression($$); } <expression>
-%destructor { releaseFactor($$); } <factor>
-
-
-
 
 
 /** Terminals. */
@@ -64,7 +53,7 @@
 %token <token> LEFT_BRACE
 %token <token> RIGHT_BRACE
 %token <token> LEFT_PARENTHESIS
-%token <token> RIGH_TPARENTHESIS
+%token <token> RIGHT_PARENTHESIS
 
 %token <token> COMMA
 %token <token> SEMICOLON
@@ -96,7 +85,7 @@
 %token <token> RETURN
 
 %token <integer> INTEGER
-%token <float> FLOAT
+%token <floatVal> FLOAT
 %token <boolean> BOOLEAN
 %token <string> STRING
 
@@ -112,25 +101,27 @@
 %token <token> UNKNOWN
 
 
-
-
-
-
-
-
 /** Non-terminals. **/ // tipos de dato para los no terminales generados por bison (ni idea comment de mr miz)
-%type <constant> constant
-%type <expression> expression
-%type <factor> factor
 %type <program> program
-// TODO (%type)
-
-
-
-
-
-
-
+%type <expression> expression
+%type <statementList> functions
+%type <statement> statement
+%type <statementList> statementList
+%type <statement> ifStatement 
+%type <statement> statementOrBlock
+%type <statementList> forUpdate
+%type <statement> forInitializer
+%type <statement> upStatement
+%type <statement> downStatement
+%type <statement> variableDeclaration
+%type <expression> functionCall
+%type <argumentList> argumentList
+%type <parameterList> parameterList
+%type <condition> condition
+%type <token> relationalOperator
+%type <declaration> globalDeclaration
+%type <declarationList> globalDeclarations
+%type <typeNode> type
 
 
 
@@ -139,87 +130,184 @@
  *
  * @see https://www.gnu.org/software/bison/manual/html_node/Precedence.html
  */
-%left ADD SUB
-%left MUL DIV
+
+%left OR
+%left AND
+%nonassoc EQUALS NOT_EQUALS
+%nonassoc LOWER_THAN GREATER_THAN LOWER_EQUALS GREATER_EQUALS
 %right NOT
-// TODO: ver temas de asociatividad y precedencia de lo que definimos
+%left ADD SUB
+%left MUL DIV MOD
+%right INCREMENT DECREMENT
 
-
-
-
-
-
-
-
-
-
+// Grammar
 
 %%
 
-// IMPORTANT: To use λ in the following grammar, use the %empty symbol.
+program
+    : globalDeclarations functions
+    ;
 
-program: expression													{ $$ = ExpressionProgramSemanticAction(currentCompilerState(), $1); }
-	;
+globalDeclarations
+    : globalDeclaration globalDeclarations
+    | %empty
+    ;
 
-expression: expression[left] ADD expression[right]					{ $$ = ArithmeticExpressionSemanticAction($left, $right, ADDITION); }
-	| expression[left] DIV expression[right]						{ $$ = ArithmeticExpressionSemanticAction($left, $right, DIVISION); }
-	| expression[left] MUL expression[right]						{ $$ = ArithmeticExpressionSemanticAction($left, $right, MULTIPLICATION); }
-	| expression[left] SUB expression[right]						{ $$ = ArithmeticExpressionSemanticAction($left, $right, SUBTRACTION); }
-	| factor														{ $$ = FactorExpressionSemanticAction($1); }
-	;
+globalDeclaration
+    : INTEGER_DECLARATION IDENTIFIER EQUALS INTEGER
+    | STRING_DECLARATION IDENTIFIER EQUALS STRING
+    | BOOLEAN_DECLARATION IDENTIFIER EQUALS BOOLEAN
+    | FLOAT_DECLARATION IDENTIFIER EQUALS FLOAT
+    | SEM_DECLARATION IDENTIFIER EQUALS INTEGER
+    ;
 
-factor: OPEN_PARENTHESIS expression CLOSE_PARENTHESIS				{ $$ = ExpressionFactorSemanticAction($2); }
-	| constant														{ $$ = ConstantFactorSemanticAction($1); }
-	;
+functions
+    : functionDefinition functions
+    | mainFunctionDefinition
+    ;
 
-constant: INTEGER													{ $$ = IntegerConstantSemanticAction($1); }
-	;
+functionDefinition
+    : FUNCTION IDENTIFIER functionBody
+    ;
 
+mainFunctionDefinition
+    : FUNCTION MAIN functionBody
+    ;
 
+functionBody
+    : LEFT_PARENTHESIS parameterList RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE
+    ;
 
-// NUEVO
-program:
-    expression {
-        printf("AST generado para la expresión\n");
-        // Acción para manejar el AST final
-    }
-;
+parameterList
+    : type IDENTIFIER COMMA parameterList
+    | type IDENTIFIER
+    | %empty
+    ;
 
-expression:
-    term {
-        $$ = $1;  // Nodo raíz de la expresión es el término
-    }
-    | expression ADD term {
-        $$ = createBinaryOpNode("+", $1, $3);  // Nodo con operador "+"
-    }
-    | expression SUB term {
-        $$ = createBinaryOpNode("-", $1, $3);  // Nodo con operador "-"
-    }
-;
+type
+    : INTEGER_DECLARATION
+    | STRING_DECLARATION
+    | FLOAT_DECLARATION
+    | BOOLEAN_DECLARATION
+    | SEM_DECLARATION
+    ;
 
-term:
-    factor {
-        $$ = $1;  // Nodo raíz del factor
-    }
-    | term MUL factor {
-        $$ = createBinaryOpNode("*", $1, $3);  // Nodo con operador "*"
-    }
-    | term DIV factor {
-        $$ = createBinaryOpNode("/", $1, $3);  // Nodo con operador "/"
-    }
-;
+statementList
+    : statement statementList
+    | %empty
+    ;
 
-factor:
-    INTEGER {
-        $$ = createConstantNode($1);  // Nodo constante para un entero
-    }
-    | ID {
-        $$ = createIdentifierNode($1);  // Nodo para un identificador
-    }
-    | OPEN_PARENTHESIS expression CLOSE_PARENTHESIS {
-        $$ = $2;  // Si es una expresión entre paréntesis, usar la expresión interna
-    }
-;
+statement
+    : variableDeclaration NEWLINE
+    | ifStatement
+    | WHILE LEFT_PARENTHESIS condition RIGHT_PARENTHESIS statementOrBlock
+    | FOREVER statementOrBlock
+    | FOR LEFT_PARENTHESIS forInitializer SEMICOLON condition SEMICOLON forUpdate RIGHT_PARENTHESIS statementOrBlock
+    | PRINT expression NEWLINE
+    | SLEEP INTEGER NEWLINE
+    | RETURN expression NEWLINE
+    | THREAD IDENTIFIER LEFT_PARENTHESIS argumentList RIGHT_PARENTHESIS NEWLINE
+    | upStatement NEWLINE
+    | downStatement NEWLINE
+    | INCREMENT IDENTIFIER NEWLINE     
+    | DECREMENT IDENTIFIER NEWLINE     
+    | IDENTIFIER INCREMENT NEWLINE    
+    | IDENTIFIER DECREMENT NEWLINE    
+    ;
+
+ifStatement
+    : IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS statementOrBlock elseIfChain
+    ;
+
+elseIfChain
+    : ELSE IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS statementOrBlock elseIfChain
+    | ELSE statementOrBlock
+    | %empty
+    ;
+
+statementOrBlock
+    : LEFT_BRACE statementList RIGHT_BRACE
+    | statement
+    ;
+
+upStatement
+    : UP IDENTIFIER
+    ;
+
+downStatement
+    : DOWN IDENTIFIER
+    ;
+
+forInitializer
+    : variableDeclaration COMMA forInitializer
+    | variableDeclaration
+    | %empty
+    ;
+
+forUpdate
+    : statement
+    | %empty
+    ;
+
+variableDeclaration
+    : INTEGER_DECLARATION IDENTIFIER EQUALS expression
+    | STRING_DECLARATION IDENTIFIER EQUALS expression
+    | BOOLEAN_DECLARATION IDENTIFIER EQUALS expression
+    | BOOLEAN_DECLARATION IDENTIFIER EQUALS condition
+    | FLOAT_DECLARATION IDENTIFIER EQUALS expression
+    | SEM_DECLARATION IDENTIFIER EQUALS expression
+    ;
+
+value
+    : INTEGER
+    | STRING
+    | BOOLEAN
+    | FLOAT
+    | IDENTIFIER
+    ;
+
+functionCall
+    : IDENTIFIER LEFT_PARENTHESIS argumentList RIGHT_PARENTHESIS
+    ;
+
+argumentList
+    : expression COMMA argumentList
+    | expression
+    | %empty
+    ;
+
+condition
+    : value relationalOperator value
+    | NOT condition
+    | condition AND condition
+    | condition OR condition
+    | LEFT_PARENTHESIS condition RIGHT_PARENTHESIS
+    | %empty 
+    ;
+
+relationalOperator
+    : EQUALS
+    | NOT_EQUALS
+    | LOWER_THAN
+    | GREATER_THAN
+    | LOWER_EQUALS
+    | GREATER_EQUALS
+    ;
+
+expression
+    : value
+    | expression ADD expression
+    | expression SUB expression
+    | expression MUL expression
+    | expression DIV expression
+    | expression MOD expression
+    | expression INCREMENT     
+    | expression DECREMENT     
+    | INCREMENT expression     
+    | DECREMENT expression     
+    | functionCall
+    ;
+
 
 %%
 
