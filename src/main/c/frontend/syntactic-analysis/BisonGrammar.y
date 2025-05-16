@@ -103,25 +103,26 @@
 
 /** Non-terminals. **/ // tipos de dato para los no terminales generados por bison (ni idea comment de mr miz)
 %type <program> program
-%type <expression> expression
+%type <declarationList> globalDeclarations
+%type <declaration> globalDeclaration
 %type <statementList> functions
-%type <statement> statement
-%type <statementList> statementList
-%type <statement> ifStatement 
-%type <statement> statementOrBlock
-%type <statementList> forUpdate
-%type <statement> forInitializer
-%type <statement> upStatement
-%type <statement> downStatement
-%type <statement> variableDeclaration
-%type <expression> functionCall
-%type <argumentList> argumentList
+%type <statement> functionBody
 %type <parameterList> parameterList
+%type <typeNode> type
+%type <statementList> statementList
+%type <statement> statement
+%type <statement> ifStatement 
+%type <statement> elseIfChain
+%type <statement> statementOrBlock
+%type <statement> forInitializer
+%type <statementList> forUpdate
+%type <statement> variableDeclaration
+%type <expression> value
+%type <argumentList> argumentList
 %type <condition> condition
 %type <token> relationalOperator
-%type <declaration> globalDeclaration
-%type <declarationList> globalDeclarations
-%type <typeNode> type
+%type <expression> expression
+
 
 
 
@@ -162,16 +163,8 @@ globalDeclaration
     ;
 
 functions
-    : functionDefinition functions
-    | mainFunctionDefinition
-    ;
-
-functionDefinition
     : FUNCTION IDENTIFIER functionBody
-    ;
-
-mainFunctionDefinition
-    : FUNCTION MAIN functionBody
+    | FUNCTION MAIN functionBody
     ;
 
 functionBody
@@ -207,8 +200,8 @@ statement
     | SLEEP INTEGER NEWLINE
     | RETURN expression NEWLINE
     | THREAD IDENTIFIER LEFT_PARENTHESIS argumentList RIGHT_PARENTHESIS NEWLINE
-    | upStatement NEWLINE
-    | downStatement NEWLINE
+    | UP IDENTIFIER NEWLINE
+    | DOWN IDENTIFIER NEWLINE
     | INCREMENT IDENTIFIER NEWLINE     
     | DECREMENT IDENTIFIER NEWLINE     
     | IDENTIFIER INCREMENT NEWLINE    
@@ -228,14 +221,6 @@ elseIfChain
 statementOrBlock
     : LEFT_BRACE statementList RIGHT_BRACE
     | statement
-    ;
-
-upStatement
-    : UP IDENTIFIER
-    ;
-
-downStatement
-    : DOWN IDENTIFIER
     ;
 
 forInitializer
@@ -264,10 +249,6 @@ value
     | BOOLEAN
     | FLOAT
     | IDENTIFIER
-    ;
-
-functionCall
-    : IDENTIFIER LEFT_PARENTHESIS argumentList RIGHT_PARENTHESIS
     ;
 
 argumentList
@@ -305,9 +286,8 @@ expression
     | expression DECREMENT     
     | INCREMENT expression     
     | DECREMENT expression     
-    | functionCall
+    | IDENTIFIER LEFT_PARENTHESIS argumentList RIGHT_PARENTHESIS
     ;
-
 
 %%
 
