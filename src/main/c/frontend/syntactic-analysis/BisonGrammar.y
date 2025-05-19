@@ -193,8 +193,8 @@ function_list: function function_list                              { $$ = Functi
     ;
 
 function
-    : type IDENTIFIER LEFT_PARENTHESIS parameter_list RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE                   { $$ = FunctionSemanticAction($2, $4, $7, false); }
-    | type MAIN LEFT_PARENTHESIS parameter_list RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE                         { $$ = FunctionSemanticAction(NULL, $4, $7, true); }
+    : type IDENTIFIER LEFT_PARENTHESIS parameter_list RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE                   { $$ = FunctionSemanticAction($1, $2, $4, $7, false); }
+    | type MAIN LEFT_PARENTHESIS parameter_list RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE                         { $$ = FunctionSemanticAction($1, NULL, $4, $7, true); }
     ;
 
 parameter_list: parameter_list_not_empty                           { $$ = $1; }

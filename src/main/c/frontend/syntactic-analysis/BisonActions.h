@@ -36,6 +36,9 @@ Condition* LogicalConditionSemanticAction(Condition* leftCondition, Condition* r
 Condition* ParenthesisConditionSemanticAction(Condition* subCondition);
 Condition* EmptyConditionSemanticAction(void);
 
+/** Relational Operators */
+RelationalOperator* RelationalOperatorSemanticAction(RelationalOperatorType operatorType);
+
 /** Type nodes */
 TypeNode* TypeNodeSemanticAction(TypeNodeType type);
 
@@ -88,7 +91,7 @@ Statement* ClosedStatementSemanticAction(ClosedStatement* closedStmt);
 StatementList* StatementListSemanticAction(Statement* stmt, StatementList* nextStatements);
 
 /** Functions & program */
-Function* FunctionSemanticAction(char* name, ParameterList* parameters, StatementList* body, boolean isMain);
+Function* FunctionSemanticAction(TypeNode* returnType, char* name, ParameterList* parameters, StatementList* body, boolean isMain);
 FunctionList* FunctionListSemanticAction(Function* function, FunctionList* nextFunctions);
 Program* ProgramSemanticAction(DeclarationList* globalDeclarations, FunctionList* functions, CompilerState* compilerState);
 

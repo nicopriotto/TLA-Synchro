@@ -144,7 +144,6 @@ struct Value {
 
 struct RelationalOperator {
     RelationalOperatorType type;
-    Token token;
 };
 
 struct SimpleStatement { 
@@ -373,6 +372,7 @@ struct ForUpdate {
 };
 
 struct Function { 
+	TypeNode* returnType;
 	char* name; 
 	ParameterList* parameters; 
 	StatementList* body; 
@@ -412,6 +412,7 @@ void releaseFunctionIdentifier(FunctionIdentifier* functionIdentifier);
 void releaseForInitializer(ForInitializer* forInitializer); 
 void releaseForUpdate(ForUpdate* forUpdate); 
 void releaseVariableDeclaration(VariableDeclaration* variableDeclaration); 
+void releaseRelationalOperator(RelationalOperator* relationalOperator);
 void releaseValue(Value* value);
 #endif
 

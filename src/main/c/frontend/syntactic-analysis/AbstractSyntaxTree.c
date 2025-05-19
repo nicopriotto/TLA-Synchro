@@ -318,6 +318,9 @@ void releaseTypeNode(TypeNode* typeNode) {
 void releaseFunction(Function* function) {
     logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
     if (function != NULL) {
+        if(function->returnType != NULL) {
+            releaseTypeNode(function->returnType);
+        }
         if (function->name != NULL) {
             free(function->name);
         }

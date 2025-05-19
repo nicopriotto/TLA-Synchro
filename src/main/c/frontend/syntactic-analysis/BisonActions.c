@@ -196,11 +196,10 @@ Condition* EmptyConditionSemanticAction() {
 
 /* PUBLIC FUNCTIONS - Relational Operator */
 
-RelationalOperator* RelationalOperatorSemanticAction(RelationalOperatorType type, Token token) {
+RelationalOperator* RelationalOperatorSemanticAction(RelationalOperatorType type) {
     RelationalOperator* op = malloc(sizeof(RelationalOperator));
     if (!op) return NULL;  
     op->type = type;
-    op->token = token;
     return op;
 }
 
@@ -640,10 +639,11 @@ StatementList* StatementListSemanticAction(Statement* statement, StatementList* 
 }
 
 /* PUBLIC FUNCTIONS - Functions */
-Function* FunctionSemanticAction(char* name, ParameterList* parameters, StatementList* body, boolean isMain) {
+Function* FunctionSemanticAction(TypeNode* returnType, char* name, ParameterList* parameters, StatementList* body, boolean isMain) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     Function* function = calloc(1, sizeof(Function));
+    function->returnType = returnType;
     function->name = name;
     function->parameters = parameters;
     function->body = body;
