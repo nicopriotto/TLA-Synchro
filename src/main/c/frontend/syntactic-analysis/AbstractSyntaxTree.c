@@ -78,6 +78,14 @@ void releaseValue(Value* value) {
     }
 }
 
+// Add the missing releaseRelationalOperator function after the releaseValue function
+void releaseRelationalOperator(RelationalOperator* op) {
+    logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+    if (op != NULL) {
+        free(op);
+    }
+}
+
 void releaseSimpleStatement(SimpleStatement* simpleStatement) {
     logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
     if (simpleStatement != NULL) {

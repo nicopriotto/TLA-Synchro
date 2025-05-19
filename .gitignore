@@ -21,3 +21,5 @@
 BisonParser.c
 BisonParser.h
 FlexScanner.c
+
+log.txt

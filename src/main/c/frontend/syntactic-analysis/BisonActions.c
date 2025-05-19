@@ -194,6 +194,16 @@ Condition* EmptyConditionSemanticAction() {
     return condition;
 }
 
+/* PUBLIC FUNCTIONS - Relational Operator */
+
+RelationalOperator* RelationalOperatorSemanticAction(RelationalOperatorType type, Token token) {
+    RelationalOperator* op = malloc(sizeof(RelationalOperator));
+    if (!op) return NULL;  
+    op->type = type;
+    op->token = token;
+    return op;
+}
+
 /* PUBLIC FUNCTIONS - Type Nodes */
 TypeNode* TypeNodeSemanticAction(TypeNodeType type) {
     _logSyntacticAnalyzerAction(__FUNCTION__);

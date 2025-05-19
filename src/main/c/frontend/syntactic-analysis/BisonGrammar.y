@@ -39,7 +39,6 @@
     Value* value;
 }
 
-
 /**
  * Destructors. This functions are executed after the parsing ends, so if the
  * AST must be used in the following phases of the compiler you shouldn't used
@@ -67,6 +66,7 @@
 %destructor { releaseForInitializer($$); } <forInitializer>
 %destructor { releaseForUpdate($$); } <forUpdate>
 %destructor { releaseVariableDeclaration($$); } <variableDeclaration>
+%destructor { releaseRelationalOperator($$); } <relationalOperator>
 %destructor { releaseValue($$); } <value>
 
 /** Terminals. */
@@ -83,28 +83,23 @@
 %token <token> RIGHT_BRACE
 %token <token> LEFT_PARENTHESIS
 %token <token> RIGHT_PARENTHESIS
-
-%token <token> COMMA
 %token <token> SEMICOLON
+%token <token> COMMA
+%token <token> ASSIGN
 
 %token <token> EQUALS
 %token <token> NOT_EQUALS
-%token <token> LOWER_EQUALS
-%token <token> GREATER_EQUALS
 %token <token> LOWER_THAN
 %token <token> GREATER_THAN
+%token <token> LOWER_EQUALS
+%token <token> GREATER_EQUALS
+
 %token <token> AND
 %token <token> OR
 %token <token> NOT
 
-%token <token> THREAD
-%token <token> FUNCTION
-%token <token> MAIN
-%token <token> UP
-%token <token> DOWN
-
 %token <token> IF
-%token <token> ELSE 
+%token <token> ELSE
 %token <token> WHILE
 %token <token> FOR
 %token <token> FOREVER
@@ -112,272 +107,236 @@
 %token <token> PRINT
 %token <token> SLEEP
 %token <token> RETURN
+%token <token> UP
+%token <token> DOWN
+%token <token> THREAD
+
+%token <token> INTEGER_TYPE
+%token <token> STRING_TYPE
+%token <token> FLOAT_TYPE
+%token <token> BOOLEAN_TYPE
+%token <token> SEM_TYPE
+
+%token <token> MAIN
 
 %token <integer> INTEGER
 %token <floatVal> FLOAT
 %token <boolean> BOOLEAN
 %token <string> STRING
-
-%token <token> INTEGER_DECLARATION
-%token <token> FLOAT_DECLARATION
-%token <token> BOOLEAN_DECLARATION
-%token <token> STRING_DECLARATION
-%token <token> SEM_DECLARATION
-
 %token <identifier> IDENTIFIER
+
 %token <token> NEWLINE
 
 %token <token> UNKNOWN
 
+/** Non-terminals. */
 
-/** Non-terminals. **/
 %type <program> program
-%type <declarationList> globalDeclarations
-%type <constant> constant
-%type <functionList> functions
-%type <function> functionBody
-%type <parameterList> parameterList
-%type <typeNode> type
-%type <statementList> statementList
+%type <functionList> function_list
+%type <function> function
+%type <parameterList> parameter_list
+%type <parameterList> parameter_list_not_empty
+%type <statementList> statement_list
 %type <statement> statement
-%type <openStatement> openStatement
-%type <closedStatement> closedStatement
-%type <simpleStatement> simpleStatement
-%type <functionIdentifier> functionIdentifier
-%type <forInitializer> forInitializer
-%type <forUpdate> forUpdate
-%type <variableDeclaration> variableDeclaration
-%type <value> value
-%type <argumentList> argumentList
-%type <condition> condition
-%type <relationalOperator> relationalOperator
+%type <openStatement> open_statement
+%type <closedStatement> closed_statement
+%type <simpleStatement> simple_statement
 %type <expression> expression
-
+%type <condition> condition
+%type <condition> condition_optional
+%type <argumentList> argument_list
+%type <argumentList> argument_list_not_empty
+%type <declarationList> global_declaration_list
+%type <declaration> global_declaration
+%type <typeNode> type
+%type <constant> constant
+%type <functionIdentifier> function_identifier
+%type <forInitializer> for_initializer
+%type <forInitializer> for_initializer_not_empty
+%type <forUpdate> for_update
+%type <forUpdate> for_update_not_empty
+%type <variableDeclaration> variable_declaration
+%type <relationalOperator> relational_operator
+%type <value> value
 
 /**
- * Precedence and associativity - ONLY for expressions, NO artificial precedences
+ * Precedence and associativity.
  *
  * @see https://www.gnu.org/software/bison/manual/html_node/Precedence.html
  */
-
 %left OR
 %left AND
-%nonassoc EQUALS NOT_EQUALS
-%nonassoc LOWER_THAN GREATER_THAN LOWER_EQUALS GREATER_EQUALS
-%right NOT
+%left EQUALS NOT_EQUALS
+%left LOWER_THAN GREATER_THAN LOWER_EQUALS GREATER_EQUALS
 %left ADD SUB
 %left MUL DIV MOD
+%right NOT
+%right UMINUS
 %right INCREMENT DECREMENT
 
-
-// Grammar
 %%
 
-// Global declarations should always be at the beginning of the program
-program
-    : globalDeclarations functions         { $$ = ProgramSemanticAction($1, $2, compilerState); }
+// IMPORTANT: To use λ in the following grammar, use the %empty symbol.
+
+program: global_declaration_list function_list                     { $$ = ProgramSemanticAction($1, $2, currentCompilerState()); }
     ;
 
-globalDeclarations
-    : type IDENTIFIER EQUALS constant NEWLINE globalDeclarations    
-        { 
-            Declaration* declaration = DeclarationSemanticAction($1, $2, $4);
-            $$ = DeclarationListSemanticAction(declaration, $6);
-        }
-    | %empty                               { $$ = NULL; }
+global_declaration_list: global_declaration global_declaration_list { $$ = DeclarationListSemanticAction($1, $2); }
+    | %empty                                                       { $$ = NULL; }
     ;
 
-constant
-    : INTEGER                              { $$ = IntegerConstantSemanticAction($1); }
-    | STRING                               { $$ = StringConstantSemanticAction($1); }
-    | BOOLEAN                              { $$ = BooleanConstantSemanticAction($1); }
-    | FLOAT                                { $$ = FloatConstantSemanticAction($1); }
+global_declaration: type IDENTIFIER ASSIGN constant NEWLINE      { $$ = DeclarationSemanticAction($1, $2, $4); }
     ;
 
-// Main function should be the last function in the program
-functions
-    : FUNCTION IDENTIFIER functionBody functions    
-        { 
-            Function* function = FunctionSemanticAction($2, $3->parameters, $3->body, false);
-            $$ = FunctionListSemanticAction(function, $4);
-        }
-    | FUNCTION MAIN functionBody           
-        { 
-            Function* function = FunctionSemanticAction(strdup("main"), $3->parameters, $3->body, true);
-            $$ = FunctionListSemanticAction(function, NULL);
-        }
+function_list: function function_list                              { $$ = FunctionListSemanticAction($1, $2); }
+    | %empty                                                       { $$ = NULL; }
     ;
 
-functionBody
-    : LEFT_PARENTHESIS parameterList RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE
-        { 
-            $$ = FunctionSemanticAction(NULL, $2, $5, false);
-        }
+function
+    : type IDENTIFIER LEFT_PARENTHESIS parameter_list RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE                   { $$ = FunctionSemanticAction($2, $4, $7, false); }
+    | type MAIN LEFT_PARENTHESIS parameter_list RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE                         { $$ = FunctionSemanticAction(NULL, $4, $7, true); }
     ;
 
-parameterList
-    : type IDENTIFIER COMMA parameterList  { $$ = ParameterListSemanticAction($1, $2, $4); }
-    | type IDENTIFIER                      { $$ = ParameterListSemanticAction($1, $2, NULL); }
-    | %empty                               { $$ = NULL; }
+parameter_list: parameter_list_not_empty                           { $$ = $1; }
+    | %empty                                                       { $$ = NULL; }
     ;
 
-type
-    : INTEGER_DECLARATION                  { $$ = TypeNodeSemanticAction(TYPE_INTEGER); }
-    | STRING_DECLARATION                   { $$ = TypeNodeSemanticAction(TYPE_STRING); }
-    | FLOAT_DECLARATION                    { $$ = TypeNodeSemanticAction(TYPE_FLOAT); }
-    | BOOLEAN_DECLARATION                  { $$ = TypeNodeSemanticAction(TYPE_BOOLEAN); }
-    | SEM_DECLARATION                      { $$ = TypeNodeSemanticAction(TYPE_SEM); }
+parameter_list_not_empty: type IDENTIFIER                          { $$ = ParameterListSemanticAction($1, $2, NULL); }
+    | type IDENTIFIER COMMA parameter_list_not_empty               { $$ = ParameterListSemanticAction($1, $2, $4); }
     ;
 
-statementList
-    : statement statementList              { $$ = StatementListSemanticAction($1, $2); }
-    | %empty                               { $$ = NULL; }
+statement_list: statement statement_list                           { $$ = StatementListSemanticAction($1, $2); }
+    | %empty                                                       { $$ = NULL; }
     ;
 
-// Solution to the dangling else problem
-// See: https://en.wikipedia.org/wiki/Dangling_else 
-statement
-    : openStatement                        { $$ = OpenStatementSemanticAction($1); }
-    | closedStatement                      { $$ = ClosedStatementSemanticAction($1); }
+statement: open_statement                                          { $$ = OpenStatementSemanticAction($1); }
+    | closed_statement                                             { $$ = ClosedStatementSemanticAction($1); }
     ;
 
-// Open statements - those that end with an open (unmatched) statement
-openStatement
-    : IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS statement
-        { $$ = IfOpenStatementSemanticAction($3, $5); }
-    | IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS closedStatement ELSE openStatement
-        { 
-            Statement* thenStmt = ClosedStatementSemanticAction($5);
-            $$ = IfElseOpenStatementSemanticAction($3, thenStmt, $7);
-        }
-    | WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS openStatement
-        { $$ = WhileOpenStatementSemanticAction($3, $5); }
-    | FOR LEFT_PARENTHESIS forInitializer SEMICOLON condition SEMICOLON forUpdate RIGHT_PARENTHESIS openStatement
-        { $$ = ForOpenStatementSemanticAction($3, $5, $7, $9); }
-    | FOREVER openStatement
-        { $$ = ForeverOpenStatementSemanticAction($2); }
+open_statement: IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS statement
+                                                                  { $$ = IfOpenStatementSemanticAction($3, $5); }
+    | IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS closed_statement ELSE open_statement
+                                                                  { $$ = IfElseOpenStatementSemanticAction($3, ClosedStatementSemanticAction($5), $7); }
+    | WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS open_statement
+                                                                  { $$ = WhileOpenStatementSemanticAction($3, $5); }
+    | FOR LEFT_PARENTHESIS for_initializer SEMICOLON condition_optional SEMICOLON for_update RIGHT_PARENTHESIS open_statement
+                                                                  { $$ = ForOpenStatementSemanticAction($3, $5, $7, $9); }
+    | FOREVER open_statement                                       { $$ = ForeverOpenStatementSemanticAction($2); }
     ;
 
-// Closed statements - those that are completely matched and closed
-closedStatement
-    : simpleStatement NEWLINE
-        { $$ = SimpleClosedStatementSemanticAction($1); }
-    | IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS closedStatement ELSE closedStatement
-        { $$ = IfElseClosedStatementSemanticAction($3, $5, $7); }
-    | IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE
-        { $$ = IfBlockClosedStatementSemanticAction($3, $6); }
-    | WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS closedStatement
-        { $$ = WhileClosedStatementSemanticAction($3, $5); }
-    | WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE
-        { $$ = WhileBlockClosedStatementSemanticAction($3, $6); }
-    | FOR LEFT_PARENTHESIS forInitializer SEMICOLON condition SEMICOLON forUpdate RIGHT_PARENTHESIS closedStatement
-        { $$ = ForClosedStatementSemanticAction($3, $5, $7, $9); }
-    | FOR LEFT_PARENTHESIS forInitializer SEMICOLON condition SEMICOLON forUpdate RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE
-        { $$ = ForBlockClosedStatementSemanticAction($3, $5, $7, $10); }
-    | FOREVER closedStatement
-        { $$ = ForeverClosedStatementSemanticAction($2); }
-    | FOREVER LEFT_BRACE statementList RIGHT_BRACE
-        { $$ = ForeverBlockClosedStatementSemanticAction($3); }
+closed_statement: simple_statement NEWLINE                       { $$ = SimpleClosedStatementSemanticAction($1); }
+    | IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS closed_statement ELSE closed_statement
+                                                                  { $$ = IfElseClosedStatementSemanticAction($3, $5, $7); }
+    | IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE
+                                                                  { $$ = IfBlockClosedStatementSemanticAction($3, $6); }
+    | WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS closed_statement
+                                                                  { $$ = WhileClosedStatementSemanticAction($3, $5); }
+    | WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE
+                                                                  { $$ = WhileBlockClosedStatementSemanticAction($3, $6); }
+    | FOR LEFT_PARENTHESIS for_initializer SEMICOLON condition_optional SEMICOLON for_update RIGHT_PARENTHESIS closed_statement
+                                                                  { $$ = ForClosedStatementSemanticAction($3, $5, $7, $9); }
+    | FOR LEFT_PARENTHESIS for_initializer SEMICOLON condition_optional SEMICOLON for_update RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE
+                                                                  { $$ = ForBlockClosedStatementSemanticAction($3, $5, $7, $10); }
+    | FOREVER closed_statement                                     { $$ = ForeverClosedStatementSemanticAction($2); }
+    | FOREVER LEFT_BRACE statement_list RIGHT_BRACE                { $$ = ForeverBlockClosedStatementSemanticAction($3); }
     ;
 
-simpleStatement
-    : functionIdentifier LEFT_PARENTHESIS argumentList RIGHT_PARENTHESIS
-        { $$ = FunctionCallSimpleStatementSemanticAction($1, $3); }
-    | INCREMENT IDENTIFIER
-        { $$ = IncrementSimpleStatementSemanticAction($2, true); }
-    | DECREMENT IDENTIFIER
-        { $$ = DecrementSimpleStatementSemanticAction($2, true); }
-    | IDENTIFIER INCREMENT
-        { $$ = IncrementSimpleStatementSemanticAction($1, false); }
-    | IDENTIFIER DECREMENT
-        { $$ = DecrementSimpleStatementSemanticAction($1, false); }
-    | variableDeclaration
-        { $$ = DeclarationSimpleStatementSemanticAction($1); }
-    | IDENTIFIER EQUALS expression
-        { $$ = AssignmentSimpleStatementSemanticAction($1, $3); }
+simple_statement: function_identifier LEFT_PARENTHESIS argument_list RIGHT_PARENTHESIS
+                                                                  { $$ = FunctionCallSimpleStatementSemanticAction($1, $3); }
+    | IDENTIFIER INCREMENT                                         { $$ = IncrementSimpleStatementSemanticAction($1, false); }
+    | INCREMENT IDENTIFIER                                         { $$ = IncrementSimpleStatementSemanticAction($2, true); }
+    | IDENTIFIER DECREMENT                                         { $$ = DecrementSimpleStatementSemanticAction($1, false); }
+    | DECREMENT IDENTIFIER                                         { $$ = DecrementSimpleStatementSemanticAction($2, true); }
+    | IDENTIFIER ASSIGN expression                                 { $$ = AssignmentSimpleStatementSemanticAction($1, $3); }
+    | variable_declaration                                         { $$ = DeclarationSimpleStatementSemanticAction($1); }
     ;
 
-functionIdentifier
-    : PRINT                                { $$ = FunctionIdentifierSemanticAction(FUNC_PRINT, NULL); }
-    | SLEEP                                { $$ = FunctionIdentifierSemanticAction(FUNC_SLEEP, NULL); }
-    | RETURN                               { $$ = FunctionIdentifierSemanticAction(FUNC_RETURN, NULL); }
-    | UP                                   { $$ = FunctionIdentifierSemanticAction(FUNC_UP, NULL); }
-    | DOWN                                 { $$ = FunctionIdentifierSemanticAction(FUNC_DOWN, NULL); }
-    | THREAD                               { $$ = FunctionIdentifierSemanticAction(FUNC_THREAD, NULL); }
-    | IDENTIFIER                           { $$ = FunctionIdentifierSemanticAction(FUNC_USER_DEFINED, $1); }
-    ;
-    
-forInitializer
-    : variableDeclaration COMMA forInitializer  { $$ = ForInitializerSemanticAction($1, $3); }
-    | variableDeclaration                       { $$ = ForInitializerSemanticAction($1, NULL); }
-    | %empty                                    { $$ = NULL; }
+variable_declaration: type IDENTIFIER ASSIGN value                 { $$ = VariableDeclarationSemanticAction($1, $2, $4); }
     ;
 
-forUpdate
-    : simpleStatement                      { $$ = ForUpdateSemanticAction($1, NULL); }
-    | simpleStatement COMMA forUpdate      { $$ = ForUpdateSemanticAction($1, $3); }
-    | %empty                               { $$ = NULL; }
+for_initializer: for_initializer_not_empty                         { $$ = $1; }
+    | %empty                                                       { $$ = NULL; }
     ;
 
-variableDeclaration
-    : type IDENTIFIER EQUALS value         { $$ = VariableDeclarationSemanticAction($1, $2, $4); }
+for_initializer_not_empty: variable_declaration                    { $$ = ForInitializerSemanticAction($1, NULL); }
+    | variable_declaration COMMA for_initializer_not_empty         { $$ = ForInitializerSemanticAction($1, $3); }
     ;
 
-value
-    : expression                           { $$ = ExpressionValueSemanticAction($1); }
-    | condition                            { $$ = ConditionValueSemanticAction($1); }
+for_update: for_update_not_empty                                   { $$ = $1; }
+    | %empty                                                       { $$ = NULL; }
     ;
 
-argumentList
-    : expression COMMA argumentList        { $$ = ArgumentListSemanticAction($1, $3); }
-    | expression                           { $$ = ArgumentListSemanticAction($1, NULL); }
-    | %empty                               { $$ = NULL; }
+for_update_not_empty: simple_statement                             { $$ = ForUpdateSemanticAction($1, NULL); }
+    | simple_statement COMMA for_update_not_empty                  { $$ = ForUpdateSemanticAction($1, $3); }
     ;
 
-condition
-    : value relationalOperator value       
-        { 
-            RelationalOperatorType opType;
-            switch ($2->type) {
-                case EQUALS: opType = REL_EQUALS; break;
-                case NOT_EQUALS: opType = REL_NOT_EQUALS; break;
-                case LOWER_THAN: opType = REL_LOWER_THAN; break;
-                case GREATER_THAN: opType = REL_GREATER_THAN; break;
-                case LOWER_EQUALS: opType = REL_LOWER_EQUALS; break;
-                case GREATER_EQUALS: opType = REL_GREATER_EQUALS; break;
-            }
-            $$ = RelationalConditionSemanticAction($1, opType, $3);
-        }
-    | NOT condition                        { $$ = NotConditionSemanticAction($2); }
-    | condition AND condition              { $$ = LogicalConditionSemanticAction($1, $3, COND_AND); }
-    | condition OR condition               { $$ = LogicalConditionSemanticAction($1, $3, COND_OR); }
-    | LEFT_PARENTHESIS condition RIGHT_PARENTHESIS  { $$ = ParenthesisConditionSemanticAction($2); }
-    | %empty                               { $$ = EmptyConditionSemanticAction(); }
+function_identifier: PRINT                                         { $$ = FunctionIdentifierSemanticAction(FUNC_PRINT, NULL); }
+    | SLEEP                                                        { $$ = FunctionIdentifierSemanticAction(FUNC_SLEEP, NULL); }
+    | RETURN                                                       { $$ = FunctionIdentifierSemanticAction(FUNC_RETURN, NULL); }
+    | UP                                                           { $$ = FunctionIdentifierSemanticAction(FUNC_UP, NULL); }
+    | DOWN                                                         { $$ = FunctionIdentifierSemanticAction(FUNC_DOWN, NULL); }
+    | THREAD                                                       { $$ = FunctionIdentifierSemanticAction(FUNC_THREAD, NULL); }
+    | IDENTIFIER                                                   { $$ = FunctionIdentifierSemanticAction(FUNC_USER_DEFINED, $1); }
     ;
 
-relationalOperator
-    : EQUALS                               { $$ = &$1; }
-    | NOT_EQUALS                           { $$ = &$1; }
-    | LOWER_THAN                           { $$ = &$1; }
-    | GREATER_THAN                         { $$ = &$1; }
-    | LOWER_EQUALS                         { $$ = &$1; }
-    | GREATER_EQUALS                       { $$ = &$1; }
+argument_list: argument_list_not_empty                             { $$ = $1; }
+    | %empty                                                       { $$ = NULL; }
     ;
 
-expression
-    : constant                             { $$ = ConstantExpressionSemanticAction($1); }
-    | IDENTIFIER                           { $$ = IdentifierExpressionSemanticAction($1); }
-    | expression ADD expression            { $$ = BinaryExpressionSemanticAction($1, $3, EXPR_ADD); }
-    | expression SUB expression            { $$ = BinaryExpressionSemanticAction($1, $3, EXPR_SUB); }
-    | expression MUL expression            { $$ = BinaryExpressionSemanticAction($1, $3, EXPR_MUL); }
-    | expression DIV expression            { $$ = BinaryExpressionSemanticAction($1, $3, EXPR_DIV); }
-    | expression MOD expression            { $$ = BinaryExpressionSemanticAction($1, $3, EXPR_MOD); }
-    | expression INCREMENT                 { $$ = UnaryExpressionSemanticAction($1, EXPR_INCREMENT); }
-    | expression DECREMENT                 { $$ = UnaryExpressionSemanticAction($1, EXPR_DECREMENT); }
-    | INCREMENT expression                 { $$ = UnaryExpressionSemanticAction($2, EXPR_PRE_INCREMENT); }
-    | DECREMENT expression                 { $$ = UnaryExpressionSemanticAction($2, EXPR_PRE_DECREMENT); }
-    | IDENTIFIER LEFT_PARENTHESIS argumentList RIGHT_PARENTHESIS
-        { $$ = FunctionCallExpressionSemanticAction($1, $3); }
+argument_list_not_empty: expression                                { $$ = ArgumentListSemanticAction($1, NULL); }
+    | expression COMMA argument_list_not_empty                     { $$ = ArgumentListSemanticAction($1, $3); }
+    ;
+
+condition_optional: condition                                      { $$ = $1; }
+    | %empty                                                       { $$ = EmptyConditionSemanticAction(); }
+    ;
+
+condition: value relational_operator value                         { $$ = RelationalConditionSemanticAction($1, $2->type, $3); free($2); }
+    | NOT condition                                                { $$ = NotConditionSemanticAction($2); }
+    | condition AND condition                                      { $$ = LogicalConditionSemanticAction($1, $3, COND_AND); }
+    | condition OR condition                                       { $$ = LogicalConditionSemanticAction($1, $3, COND_OR); }
+    | LEFT_PARENTHESIS condition RIGHT_PARENTHESIS                 { $$ = ParenthesisConditionSemanticAction($2); }
+    ;
+
+value: expression                                                  { $$ = ExpressionValueSemanticAction($1); }
+    | condition                                                    { $$ = ConditionValueSemanticAction($1); }
+    ;
+
+relational_operator: EQUALS                                        { $$ = RelationalOperatorSemanticAction(REL_EQUALS); }
+    | NOT_EQUALS                                                   { $$ = RelationalOperatorSemanticAction(REL_NOT_EQUALS); }
+    | LOWER_THAN                                                   { $$ = RelationalOperatorSemanticAction(REL_LOWER_THAN); }
+    | GREATER_THAN                                                 { $$ = RelationalOperatorSemanticAction(REL_GREATER_THAN); }
+    | LOWER_EQUALS                                                 { $$ = RelationalOperatorSemanticAction(REL_LOWER_EQUALS); }
+    | GREATER_EQUALS                                               { $$ = RelationalOperatorSemanticAction(REL_GREATER_EQUALS); }
+    ;
+
+expression: expression ADD expression                              { $$ = BinaryExpressionSemanticAction($1, $3, EXPR_ADD); }
+    | expression SUB expression                                    { $$ = BinaryExpressionSemanticAction($1, $3, EXPR_SUB); }
+    | expression MUL expression                                    { $$ = BinaryExpressionSemanticAction($1, $3, EXPR_MUL); }
+    | expression DIV expression                                    { $$ = BinaryExpressionSemanticAction($1, $3, EXPR_DIV); }
+    | expression MOD expression                                    { $$ = BinaryExpressionSemanticAction($1, $3, EXPR_MOD); }
+    | SUB expression %prec UMINUS                                  { $$ = UnaryExpressionSemanticAction($2, EXPR_SUB); }
+    | IDENTIFIER INCREMENT                                         { $$ = UnaryExpressionSemanticAction(IdentifierExpressionSemanticAction($1), EXPR_INCREMENT); }
+    | INCREMENT IDENTIFIER                                         { $$ = UnaryExpressionSemanticAction(IdentifierExpressionSemanticAction($2), EXPR_PRE_INCREMENT); }
+    | IDENTIFIER DECREMENT                                         { $$ = UnaryExpressionSemanticAction(IdentifierExpressionSemanticAction($1), EXPR_DECREMENT); }
+    | DECREMENT IDENTIFIER                                         { $$ = UnaryExpressionSemanticAction(IdentifierExpressionSemanticAction($2), EXPR_PRE_DECREMENT); }
+    | LEFT_PARENTHESIS expression RIGHT_PARENTHESIS                { $$ = $2; }
+    | IDENTIFIER LEFT_PARENTHESIS argument_list RIGHT_PARENTHESIS  { $$ = FunctionCallExpressionSemanticAction($1, $3); }
+    | constant                                                     { $$ = ConstantExpressionSemanticAction($1); }
+    | IDENTIFIER                                                   { $$ = IdentifierExpressionSemanticAction($1); }
+    ;
+
+constant: INTEGER                                         { $$ = IntegerConstantSemanticAction($1); }
+    | FLOAT                                               { $$ = FloatConstantSemanticAction($1); }
+    | BOOLEAN                                             { $$ = BooleanConstantSemanticAction($1); }
+    | STRING                                              { $$ = StringConstantSemanticAction($1); }
+    ;
+
+type: INTEGER_TYPE                                                 { $$ = TypeNodeSemanticAction(TYPE_INTEGER); }
+    | STRING_TYPE                                                  { $$ = TypeNodeSemanticAction(TYPE_STRING); }
+    | FLOAT_TYPE                                                   { $$ = TypeNodeSemanticAction(TYPE_FLOAT); }
+    | BOOLEAN_TYPE                                                 { $$ = TypeNodeSemanticAction(TYPE_BOOLEAN); }
+    | SEM_TYPE                                                     { $$ = TypeNodeSemanticAction(TYPE_SEM); }
     ;
 
 %%

@@ -1,6 +1,9 @@
-#ifndef ABSTRACT_SYNTAX_TREE_HEADER #define ABSTRACT_SYNTAX_TREE_HEADER
+#ifndef ABSTRACT_SYNTAX_TREE_HEADER 
+#define ABSTRACT_SYNTAX_TREE_HEADER
 
-#include "../../shared/Logger.h" #include <stdlib.h> #include <stdbool.h>
+#include "../../shared/Logger.h" 
+#include <stdlib.h> 
+#include <stdbool.h>
 
 /** Initialize module's internal state. */ 
 void initializeAbstractSyntaxTreeModule();
@@ -35,6 +38,7 @@ typedef struct ForInitializer ForInitializer;
 typedef struct ForUpdate ForUpdate; 
 typedef struct FunctionIdentifier FunctionIdentifier; 
 typedef struct VariableDeclaration VariableDeclaration; 
+typedef struct RelationalOperator RelationalOperator;
 typedef struct Value Value;
 
 
@@ -60,7 +64,9 @@ enum RelationalOperatorType {
 	REL_EQUALS, 
 	REL_NOT_EQUALS, 
 	REL_LOWER_THAN, 
-	REL_GREATER_THAN, REL_LOWER_EQUALS, REL_GREATER_EQUALS 
+	REL_GREATER_THAN, 
+	REL_LOWER_EQUALS, 
+	REL_GREATER_EQUALS 
 };
 	
 enum StatementType { 
@@ -94,6 +100,8 @@ enum ValueType {
 	VAL_EXPRESSION, 
 	VAL_CONDITION 
 };
+
+
 
 struct Constant { 
 	union { 
@@ -132,6 +140,11 @@ struct Value {
 		Expression* expression; 
 		Condition* condition; 
 	}; ValueType type; 
+};
+
+struct RelationalOperator {
+    RelationalOperatorType type;
+    Token token;
 };
 
 struct SimpleStatement { 

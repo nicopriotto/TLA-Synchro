@@ -38,7 +38,7 @@ Token SymbolLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, Token 
 // Literals
 Token IntegerLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
 Token StringLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
-Token BooleanLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, Token token);
+Token BooleanLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
 Token FloatLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext);
 
 // Keywords
