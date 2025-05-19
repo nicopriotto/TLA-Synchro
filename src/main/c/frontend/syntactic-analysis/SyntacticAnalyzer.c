@@ -74,3 +74,5 @@ SyntacticAnalysisStatus parse(CompilerState * compilerState) {
 	compilerState->succeed = false;
 	return syntacticAnalysisStatus;
 }
+
+

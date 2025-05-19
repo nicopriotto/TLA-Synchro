@@ -44,13 +44,6 @@ void BeginMultilineCommentLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerC
 	destroyLexicalAnalyzerContext(lexicalAnalyzerContext);
 }
 
-void EndMultilineCommentLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
-	if (_logIgnoredLexemes) {
-		_logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
-	}
-	destroyLexicalAnalyzerContext(lexicalAnalyzerContext);
-}
-
 void IgnoredLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
 	if (_logIgnoredLexemes) {
 		_logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
@@ -67,6 +60,13 @@ Token ArithmeticOperatorLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerCon
 	return token;
 }
 
+// Symbols
+Token SymbolLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, Token token) {
+	_logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
+	lexicalAnalyzerContext->semanticValue->token = token;
+	destroyLexicalAnalyzerContext(lexicalAnalyzerContext);
+	return token;
+}
 
 // Relational Operators
 Token RelationalOperatorLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, Token token) {
@@ -76,22 +76,27 @@ Token RelationalOperatorLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerCon
 	return token;
 }
 
-
-// Symbols
-Token SymbolLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, Token token) {
+// Keywords
+Token KeywordLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, Token token) {
 	_logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
 	lexicalAnalyzerContext->semanticValue->token = token;
 	destroyLexicalAnalyzerContext(lexicalAnalyzerContext);
 	return token;
 }
 
-
 // Literals
-Token IntegerLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
+
+Token BooleanLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
 	_logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
-	lexicalAnalyzerContext->semanticValue->integer = atoi(lexicalAnalyzerContext->lexeme);
+
+	if (strcmp(lexicalAnalyzerContext->lexeme, "true") == 0) {
+		lexicalAnalyzerContext->semanticValue->boolean = true;
+	} else {
+		lexicalAnalyzerContext->semanticValue->boolean = false;
+	}
+
 	destroyLexicalAnalyzerContext(lexicalAnalyzerContext);
-	return INTEGER;
+	return BOOLEAN;
 }
 
 Token StringLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
@@ -111,18 +116,13 @@ Token StringLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
 	return STRING;
 }
 
-Token BooleanLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
+Token IntegerLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
 	_logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
-
-	if (strcmp(lexicalAnalyzerContext->lexeme, "true") == 0) {
-		lexicalAnalyzerContext->semanticValue->boolean = true;
-	} else {
-		lexicalAnalyzerContext->semanticValue->boolean = false;
-	}
-
+	lexicalAnalyzerContext->semanticValue->integer = atoi(lexicalAnalyzerContext->lexeme);
 	destroyLexicalAnalyzerContext(lexicalAnalyzerContext);
-	return BOOLEAN;
+	return INTEGER;
 }
+
 
 Token FloatLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
 	_logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
@@ -131,14 +131,6 @@ Token FloatLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext) {
 	return FLOAT;
 }
 
-
-// Keywords
-Token KeywordLexemeAction(LexicalAnalyzerContext * lexicalAnalyzerContext, Token token) {
-	_logLexicalAnalyzerContext(__FUNCTION__, lexicalAnalyzerContext);
-	lexicalAnalyzerContext->semanticValue->token = token;
-	destroyLexicalAnalyzerContext(lexicalAnalyzerContext);
-	return token;
-}
 
 
 // Identifiers
