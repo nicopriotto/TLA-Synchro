@@ -16,7 +16,6 @@ typedef enum RelationalOperatorType RelationalOperatorType;
 typedef enum StatementType StatementType; 
 typedef enum TypeNodeType TypeNodeType; 
 typedef enum FunctionIdentifierType FunctionIdentifierType; 
-typedef enum ValueType ValueType;
 
 typedef struct Constant Constant; 
 typedef struct Expression Expression; 
@@ -42,96 +41,91 @@ typedef struct DeclarationTail DeclarationTail;
 typedef struct ParameterList ParameterList;
 
 /**
-
-Node types for the Abstract Syntax Tree (AST). */ 
+ * Node types for the Abstract Syntax Tree (AST).
+ */ 
 enum ExpressionType { 
-	EXPR_CONSTANT, 
-	EXPR_IDENTIFIER, 
-	EXPR_ADD, 
-	EXPR_SUB, 
-	EXPR_MUL, 
-	EXPR_DIV,
-	EXPR_MOD, 
-	EXPR_INCREMENT, 
-	EXPR_DECREMENT, 
-	EXPR_PRE_INCREMENT, 
-	EXPR_PRE_DECREMENT, 
-	EXPR_FUNCTION_CALL 
+    EXPR_CONSTANT, 
+    EXPR_IDENTIFIER, 
+    EXPR_ADD, 
+    EXPR_SUB, 
+    EXPR_MUL, 
+    EXPR_DIV,
+    EXPR_MOD, 
+    EXPR_INCREMENT, 
+    EXPR_DECREMENT, 
+    EXPR_PRE_INCREMENT, 
+    EXPR_PRE_DECREMENT, 
+    EXPR_FUNCTION_CALL 
 };
 
 enum RelationalOperatorType { 
-	REL_EQUALS, 
-	REL_NOT_EQUALS, 
-	REL_LOWER_THAN, 
-	REL_GREATER_THAN, 
-	REL_LOWER_EQUALS, 
-	REL_GREATER_EQUALS 
+    REL_EQUALS, 
+    REL_NOT_EQUALS, 
+    REL_LOWER_THAN, 
+    REL_GREATER_THAN, 
+    REL_LOWER_EQUALS, 
+    REL_GREATER_EQUALS 
 };
-	
+    
 enum StatementType { 
-	STMT_SIMPLE, 
-	STMT_IF, 
-	STMT_IF_ELSE, 
-	STMT_WHILE, 
-	STMT_FOR, 
-	STMT_FOREVER 
+    STMT_SIMPLE, 
+    STMT_IF, 
+    STMT_IF_ELSE, 
+    STMT_WHILE, 
+    STMT_FOR, 
+    STMT_FOREVER 
 };
-	
+    
 enum TypeNodeType { 
-	TYPE_INTEGER, 
-	TYPE_STRING, 
-	TYPE_FLOAT, 
-	TYPE_BOOLEAN, 
-	TYPE_SEM 
+    TYPE_INTEGER, 
+    TYPE_STRING, 
+    TYPE_FLOAT, 
+    TYPE_BOOLEAN, 
+    TYPE_SEM 
 };
 
 enum FunctionIdentifierType { 
-	FUNC_PRINT, 
-	FUNC_SLEEP, 
-	FUNC_RETURN, 
-	FUNC_UP, 
-	FUNC_DOWN, 
-	FUNC_THREAD, 
-	FUNC_USER_DEFINED 
+    FUNC_PRINT, 
+    FUNC_SLEEP, 
+    FUNC_RETURN, 
+    FUNC_UP, 
+    FUNC_DOWN, 
+    FUNC_THREAD, 
+    FUNC_USER_DEFINED 
 };
-
-enum ValueType { 
-	VAL_EXPRESSION, 
-	VAL_CONDITION 
-};
-
-
 
 struct Constant { 
-	union { 
-		int integer; 
-		float floatVal; 
-		boolean boolean; 
-		char* string; 
-	}; 
-	enum { 
-		CONST_INTEGER, 
-		CONST_FLOAT, 
-		CONST_BOOLEAN, 
-		CONST_STRING 
-	} type; 
+    union { 
+        int integer; 
+        float floatVal; 
+        bool boolean; 
+        char* string; 
+    }; 
+    enum { 
+        CONST_INTEGER, 
+        CONST_FLOAT, 
+        CONST_BOOLEAN, 
+        CONST_STRING 
+    } type; 
 };
 
 struct Expression { 
-	union { 
-		Constant* constant; 
-		char* identifier; 
-		struct { 
-			Expression* leftExpression; 
-			Expression* rightExpression; 
-		}; struct { 
-			Expression* expression; 
-		}; struct { 
-			char* functionName; 
-			ArgumentList* arguments; 
-		} functionCall; 
-	}; 
-	ExpressionType type; 
+    union { 
+        Constant* constant; 
+        char* identifier; 
+        struct { 
+            Expression* leftExpression; 
+            Expression* rightExpression; 
+        } binary; 
+        struct { 
+            Expression* expression; 
+        } unary; 
+        struct { 
+            char* functionName; 
+            ArgumentList* arguments; 
+        } functionCall; 
+    }; 
+    ExpressionType type;
 };
 
 struct RelationalOperator {
@@ -139,232 +133,234 @@ struct RelationalOperator {
 };
 
 struct SimpleStatement { 
-	union { 
-		struct { 
-			FunctionIdentifier* function; 
-			ArgumentList* arguments; 
-		} functionCall; 
-		struct { 
-			char* identifier;
-			 	boolean isPrefix; 
-			} increment; 
-			struct { 
-				char* identifier; 
-				boolean isPrefix; 
-			} decrement; 
-			struct { 
-				char* identifier; 
-				Expression* expression; 
-			} assignment; 
-			VariableDeclaration* declaration; 
-		}; 
-	enum { 
-		SIMPLE_FUNCTION_CALL, 
-		SIMPLE_INCREMENT, 
-		SIMPLE_DECREMENT, 
-		SIMPLE_ASSIGNMENT, 
-		SIMPLE_DECLARATION 
-	} type; 
+    union { 
+        struct { 
+            FunctionIdentifier* function; 
+            ArgumentList* arguments; 
+        } functionCall; 
+        struct { 
+            char* identifier;
+            bool isPrefix; 
+        } increment; 
+        struct { 
+            char* identifier; 
+            bool isPrefix; 
+        } decrement; 
+        struct { 
+            char* identifier; 
+            Expression* expression; 
+        } assignment; 
+        VariableDeclaration* declaration; 
+    }; 
+    enum { 
+        SIMPLE_FUNCTION_CALL, 
+        SIMPLE_INCREMENT, 
+        SIMPLE_DECREMENT, 
+        SIMPLE_ASSIGNMENT, 
+        SIMPLE_DECLARATION 
+    } type; 
 };
 
 struct Statement { 
-	union { 
-		SimpleStatement* simpleStatement; 
-		struct { 
-			Expression* condition; 
-			Statement* thenStatement; 
-		} ifStatement; 
-		struct { 
-			Expression* condition; 
-			Statement* thenStatement; 
-			Statement* elseStatement; 
-		} ifElseStatement; 
-		struct { 
-			Expression* condition; 
-			Statement* body; 
-		} whileStatement; 
-		struct { 
-			ForInitializer* initializer; 
-			Condition* condition; 
-			ForUpdate* update; 
-			Statement* body; 
-		} forStatement; 
-		struct { 
-			Statement* body; 
-		} foreverStatement; 
-		StatementList* blockStatement; 
-	}; 
-	StatementType type; 
+    union { 
+        SimpleStatement* simpleStatement; 
+        struct { 
+            Expression* condition; 
+            Statement* thenStatement; 
+        } ifStatement; 
+        struct { 
+            Expression* condition; 
+            Statement* thenStatement; 
+            Statement* elseStatement; 
+        } ifElseStatement; 
+        struct { 
+            Expression* condition; 
+            Statement* body; 
+        } whileStatement; 
+        struct { 
+            ForInitializer* initializer; 
+            Condition* condition; 
+            ForUpdate* update; 
+            Statement* body; 
+        } forStatement; 
+        struct { 
+            Statement* body; 
+        } foreverStatement; 
+        StatementList* blockStatement; 
+    }; 
+    StatementType type;
 };
 
 struct OpenStatement { 
-	union { 
-		struct { 
-			Expression* condition; 
-			Statement* thenStatement; 
-		} ifStatement; 
-		struct { 
-			Expression* condition; 
-			Statement* thenStatement; 
-			OpenStatement* elseStatement; 
-		} ifElseStatement; 
-		struct { 
-			Expression* condition; 
-			OpenStatement* body; 
-		} whileStatement; 
-		struct { 
-			ForInitializer* initializer; 
-			Condition* condition; 
-			ForUpdate* update; 
-			OpenStatement* body; 
-		} forStatement; 
-		struct { 
-			OpenStatement* body; 
-		} foreverStatement; 
-	}; 
-	enum { 
-		OPEN_IF, 
-		OPEN_IF_ELSE, 
-		OPEN_WHILE, 
-		OPEN_FOR, 
-		OPEN_FOREVER 
-	} type; 
+    union { 
+        struct { 
+            Expression* condition; 
+            Statement* thenStatement; 
+        } ifStatement; 
+        struct { 
+            Expression* condition; 
+            Statement* thenStatement; 
+            OpenStatement* elseStatement; 
+        } ifElseStatement; 
+        struct { 
+            Expression* condition; 
+            OpenStatement* body; 
+        } whileStatement; 
+        struct { 
+            ForInitializer* initializer; 
+            Condition* condition; 
+            ForUpdate* update; 
+            OpenStatement* body; 
+        } forStatement; 
+        struct { 
+            OpenStatement* body; 
+        } foreverStatement; 
+    }; 
+    enum { 
+        OPEN_IF, 
+        OPEN_IF_ELSE, 
+        OPEN_WHILE, 
+        OPEN_FOR, 
+        OPEN_FOREVER 
+    } type; 
 };
 
 struct ClosedStatement { 
-	union { 
-		SimpleStatement* simpleStatement; 
-		struct { 
-			Expression* condition; 
-			ClosedStatement* thenStatement; 
-			ClosedStatement* elseStatement; 
-		} ifElseStatement; 
-		struct { 
-			Expression* condition; 
-			StatementList* body; 
-		} ifBlock; 
-		struct { 
-			Expression* condition; 
-			ClosedStatement* body; 
-		} whileStatement; 
-		struct { 
-			Expression* condition; 
-			StatementList* body; 
-		} whileBlock; 
-		struct { 
-			ForInitializer* initializer; 
-			Condition* condition; 
-			ForUpdate* update; 
-			ClosedStatement* body; 
-		} forStatement; 
-		struct { 
-			ForInitializer* initializer; 
-			Condition* condition; 
-			ForUpdate* update; 
-			StatementList* body; 
-		} forBlock; 
-		struct { 
-			ClosedStatement* body; 
-		} foreverStatement; 
-		struct { 
-			StatementList* body; 
-		} foreverBlock; 
-	}; 
-	enum { 
-		CLOSED_SIMPLE, 
-		CLOSED_IF_ELSE, 
-		CLOSED_IF_BLOCK, 
-		CLOSED_WHILE, 
-		CLOSED_WHILE_BLOCK, 
-		CLOSED_FOR, 
-		CLOSED_FOR_BLOCK, 
-		CLOSED_FOREVER, 
-		CLOSED_FOREVER_BLOCK 
-	} type; 
+    union { 
+        SimpleStatement* simpleStatement; 
+        struct { 
+            Expression* condition; 
+            ClosedStatement* thenStatement; 
+            ClosedStatement* elseStatement; 
+        } ifElseStatement; 
+        struct { 
+            Expression* condition; 
+            StatementList* body; 
+        } ifBlock; 
+        struct { 
+            Expression* condition; 
+            ClosedStatement* body; 
+        } whileStatement; 
+        struct { 
+            Expression* condition; 
+            StatementList* body; 
+        } whileBlock; 
+        struct { 
+            ForInitializer* initializer; 
+            Condition* condition; 
+            ForUpdate* update; 
+            ClosedStatement* body; 
+        } forStatement; 
+        struct { 
+            ForInitializer* initializer; 
+            Condition* condition; 
+            ForUpdate* update; 
+            StatementList* body; 
+        } forBlock; 
+        struct { 
+            ClosedStatement* body; 
+        } foreverStatement; 
+        struct { 
+            StatementList* body; 
+        } foreverBlock; 
+    }; 
+    enum { 
+        CLOSED_SIMPLE, 
+        CLOSED_IF_ELSE, 
+        CLOSED_IF_BLOCK, 
+        CLOSED_WHILE, 
+        CLOSED_WHILE_BLOCK, 
+        CLOSED_FOR, 
+        CLOSED_FOR_BLOCK, 
+        CLOSED_FOREVER, 
+        CLOSED_FOREVER_BLOCK 
+    } type; 
 };
 
 struct StatementList { 
-	Statement* statement; 
-	StatementList* next; 
+    Statement* statement; 
+    StatementList* next; 
 };
 
 struct Condition { 
-	union { 
-		struct { 
-			Expression* leftValue;
-			RelationalOperatorType operator; 
-			Expression* rightValue; 
-		}; 
-		struct { 
-			Condition* condition; 
-		} not; 
-		struct { 
-			Condition* condition; 
-		} parenthesis; 
-		struct { 
-			Condition* leftCondition; 
-			Condition* rightCondition; 
-		} logical; 
-	}; 
-	enum { 
-		COND_RELATIONAL, 
-		COND_NOT, 
-		COND_AND, 
-		COND_OR, 
-		COND_PARENTHESIS, 
-		COND_EMPTY 
-	} type; 
+    union { 
+        struct { 
+            Expression* leftValue;
+            RelationalOperator* operator; 
+            Expression* rightValue; 
+        }; 
+        struct { 
+            Condition* condition; 
+        } not; 
+        struct { 
+            Condition* condition; 
+        } parenthesis; 
+        struct { 
+            Condition* leftCondition; 
+            Condition* rightCondition; 
+        } logical; 
+    }; 
+    enum { 
+        COND_RELATIONAL, 
+        COND_NOT, 
+        COND_AND, 
+        COND_OR, 
+        COND_PARENTHESIS, 
+        COND_EMPTY 
+    } type; 
 };
 
 struct TypeNode { 
-	TypeNodeType type; 
+    TypeNodeType type;
 };
 
 struct ParameterList { 
-	TypeNode* type; 
-	char* identifier; 
-	ParameterList* next; 
+    TypeNode* type; 
+    char* identifier; 
+    ParameterList* next; 
 };
 
 struct ArgumentList { 
-	Expression* expression; 
-	ArgumentList* next; 
+    Expression* expression; 
+    ArgumentList* next; 
 };
 
 struct FunctionIdentifier { 
-	union { 
-		char* identifier;
-	}; 
-	FunctionIdentifierType type; };
-
-struct VariableDeclaration { 
-	TypeNode* type; 
-	char* identifier; 
-	union { 
-		Condition* condition; 
-		Expression* expression; 
-	};
+    char* identifier;
+    FunctionIdentifierType type;
 };
 
+struct VariableDeclaration { 
+    TypeNode* type; 
+    char* identifier; 
+    union { 
+        Condition* condition; 
+        Expression* expression; 
+    };
+    enum {
+        CONDITION,
+        EXPRESSION
+    } uniontype;
+};
 
 struct ForInitializer { 
-	VariableDeclaration* declaration; 
-	ForInitializer* next; 
+    VariableDeclaration* declaration; 
+    ForInitializer* next; 
 };
 
 struct ForUpdate { 
-	SimpleStatement* statement; 
-	ForUpdate* next; 
+    SimpleStatement* statement; 
+    ForUpdate* next; 
 };
 
 struct Function { 
-	ParameterList* parameters; 
-	StatementList* body; 
+    ParameterList* parameters; 
+    StatementList* body; 
 };
 
 struct FunctionList { 
-	Function* function; 
-	FunctionList* next; 
+    Function* function; 
+    FunctionList* next; 
 };
 
 struct DeclarationTail {
@@ -382,19 +378,29 @@ struct DeclarationTail {
 };
 
 struct DeclarationList {
-	TypeNode* type;
-	char* identifier;
-	DeclarationTail* declarationTail;
-	DeclarationList* next;
+    TypeNode* type;
+    char* identifier;
+    DeclarationTail* declarationTail;
+    DeclarationList* next;
 };
 
 struct Program { 
-	DeclarationList* globalDeclarations; 
+    DeclarationList* globalDeclarations; 
 };
 
+// Node creation functions
+Constant* createConstantInteger(int value);
+Constant* createConstantFloat(float value);
+Constant* createConstantBoolean(bool value);
+Constant* createConstantString(const char* value);
 
-// Node recursive destructors.
+Expression* createExpressionConstant(Constant* constant);
+Expression* createExpressionIdentifier(const char* identifier);
+Expression* createExpressionBinary(ExpressionType type, Expression* left, Expression* right);
+Expression* createExpressionUnary(ExpressionType type, Expression* expr);
+Expression* createExpressionFunctionCall(const char* name, ArgumentList* args);
 
+// Node recursive destructors
 void releaseConstant(Constant* constant); 
 void releaseExpression(Expression* expression); 
 void releaseStatement(Statement* statement); 
@@ -403,7 +409,6 @@ void releaseCondition(Condition* condition);
 void releaseParameterList(ParameterList* parameterList); 
 void releaseArgumentList(ArgumentList* argumentList); 
 void releaseProgram(Program* program); 
-void releaseDeclaration(Declaration* declaration);
 void releaseDeclarationList(DeclarationList* declarationList); 
 void releaseTypeNode(TypeNode* typeNode); 
 void releaseFunction(Function* function); 
@@ -417,4 +422,5 @@ void releaseForUpdate(ForUpdate* forUpdate);
 void releaseVariableDeclaration(VariableDeclaration* variableDeclaration); 
 void releaseRelationalOperator(RelationalOperator* relationalOperator);
 void releaseDeclarationTail(DeclarationTail* declarationTail);
-#endif
+
+#endif // ABSTRACT_SYNTAX_TREE_HEADER

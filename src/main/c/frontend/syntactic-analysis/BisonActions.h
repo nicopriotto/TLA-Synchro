@@ -26,7 +26,7 @@ Expression* UnaryExpressionSemanticAction(Expression* subExpression, ExpressionT
 Expression* FunctionCallExpressionSemanticAction(char* functionName, ArgumentList* arguments);
 
 /** Conditions */
-Condition* RelationalConditionSemanticAction(Expression* leftValue, RelationalOperatorType operator, Expression* rightValue);
+Condition* RelationalConditionSemanticAction(Expression* leftValue, RelationalOperator* operator, Expression* rightValue);
 Condition* NotConditionSemanticAction(Condition* subCondition);
 Condition* LogicalConditionSemanticAction(Condition* leftCondition, Condition* rightCondition, int logicalType);
 Condition* ParenthesisConditionSemanticAction(Condition* subCondition);
@@ -89,7 +89,7 @@ Statement* OpenStatementSemanticAction(OpenStatement* openStmt);
 Statement* ClosedStatementSemanticAction(ClosedStatement* closedStmt);
 StatementList* StatementListSemanticAction(Statement* stmt, StatementList* nextStatements);
 
-/** Functions & program */
+/** Functions & program */ 
 DeclarationTail* FunctionSemanticAction(ParameterList* parameters, StatementList* body);
 FunctionList* FunctionListSemanticAction(Function* function, FunctionList* nextFunctions);
 Program* ProgramSemanticAction(DeclarationList* globalDeclarations, CompilerState* compilerState);

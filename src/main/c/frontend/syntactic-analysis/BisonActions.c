@@ -92,8 +92,8 @@ Expression* BinaryExpressionSemanticAction(Expression* leftExpression, Expressio
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     Expression* expression = calloc(1, sizeof(Expression));
-    expression->leftExpression = leftExpression;
-    expression->rightExpression = rightExpression;
+    expression->binary.leftExpression = leftExpression;
+    expression->binary.rightExpression = rightExpression;
     expression->type = type;
     
     return expression;
@@ -103,7 +103,7 @@ Expression* UnaryExpressionSemanticAction(Expression* subExpression, ExpressionT
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     Expression* expression = calloc(1, sizeof(Expression));
-    expression->expression = subExpression;
+    expression->unary.expression = subExpression;
     expression->type = type;
     
     return expression;
@@ -121,7 +121,7 @@ Expression* FunctionCallExpressionSemanticAction(char* functionName, ArgumentLis
 }
 
 /* PUBLIC FUNCTIONS - Conditions */
-Condition* RelationalConditionSemanticAction(Expression* leftValue, RelationalOperatorType operator, Expression* rightValue) {
+Condition* RelationalConditionSemanticAction(Expression* leftValue, RelationalOperator* operator, Expression* rightValue) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     Condition* condition = calloc(1, sizeof(Condition));
@@ -223,6 +223,7 @@ VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, 
     variableDeclaration->type = type;
     variableDeclaration->identifier = identifier;
     variableDeclaration->condition = condition;
+    variableDeclaration->uniontype = CONDITION;
     
     return variableDeclaration;
 }
@@ -234,7 +235,8 @@ VariableDeclaration* VariableDeclarationSemanticActionExpression(TypeNode* type,
     variableDeclaration->type = type;
     variableDeclaration->identifier = identifier;
     variableDeclaration->expression = expression;
-    
+    variableDeclaration->uniontype = EXPRESSION;
+
     return variableDeclaration;
 }
 
@@ -632,7 +634,8 @@ StatementList* StatementListSemanticAction(Statement* statement, StatementList* 
 /* PUBLIC FUNCTIONS - Functions */
 DeclarationTail* FunctionSemanticAction(ParameterList* parameters, StatementList* body) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
-    
+    logInformation(_logger, "exec FunctionListSemanticAction");
+
     DeclarationTail* declarationTail = calloc(1, sizeof(DeclarationTail));
     declarationTail->function.parameterList = parameters;
     declarationTail->function.statementList = body;
@@ -643,6 +646,7 @@ DeclarationTail* FunctionSemanticAction(ParameterList* parameters, StatementList
 
 FunctionList* FunctionListSemanticAction(Function* function, FunctionList* nextFunctions) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
+    logInformation(_logger, "exec FunctionListSemanticAction");
     
     FunctionList* functionList = calloc(1, sizeof(FunctionList));
     functionList->function = function;
@@ -654,6 +658,7 @@ FunctionList* FunctionListSemanticAction(Function* function, FunctionList* nextF
 /* PUBLIC FUNCTIONS - Program */
 Program* ProgramSemanticAction(DeclarationList* globalDeclarations, CompilerState* compilerState) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
+    logInformation(_logger, "exec ProgramSemanticAction");
     
     Program* program = calloc(1, sizeof(Program));
     program->globalDeclarations = globalDeclarations;

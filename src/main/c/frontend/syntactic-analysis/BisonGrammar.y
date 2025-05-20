@@ -44,6 +44,7 @@
  *
  * @see https://www.gnu.org/software/bison/manual/html_node/Destructor-Decl.html
  */
+
 %destructor { releaseExpression($$); } <expression>
 %destructor { releaseStatement($$); } <statement>
 %destructor { releaseStatementList($$); } <statementList>
@@ -62,6 +63,7 @@
 %destructor { releaseForUpdate($$); } <forUpdate>
 %destructor { releaseVariableDeclaration($$); } <variableDeclaration>
 %destructor { releaseRelationalOperator($$); } <relationalOperator>
+
 
 /** Terminals. */
 
@@ -111,7 +113,7 @@
 %token <token> BOOLEAN_TYPE
 %token <token> SEM_TYPE
 
-%token <identifier> MAIN
+%token <token> MAIN
 
 %token <integer> INTEGER
 %token <floatVal> FLOAT
@@ -161,7 +163,6 @@
 %left ADD SUB
 %left MUL DIV MOD
 %right NOT
-%right UMINUS
 %right INCREMENT DECREMENT
 
 %%
@@ -180,7 +181,7 @@ declaration_list
 
 declaration_tail
     : ASSIGN constant SEMICOLON                                                                       { $$ = DeclarationSemanticAction($2); }
-    | LEFT_PARENTHESIS parameter_list RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE       { $$ = FunctionSemanticAction($2, $5); }
+    | LEFT_PARENTHESIS parameter_list RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE         { $$ = FunctionSemanticAction($2, $5); }
     ;
     
 parameter_list
@@ -190,8 +191,9 @@ parameter_list
     ;
 
 
-statement_list: statement statement_list                           { $$ = StatementListSemanticAction($1, $2); }
-    | %empty                                                       { $$ = NULL; }
+statement_list
+    : statement statement_list                                  { $$ = StatementListSemanticAction($1, $2); }
+    | %empty                                                    { $$ = NULL; }
     ;
 
 statement: open_statement                                          { $$ = OpenStatementSemanticAction($1); }
@@ -278,7 +280,7 @@ condition_optional: condition                                      { $$ = $1; }
     | %empty                                                       { $$ = EmptyConditionSemanticAction(); }
     ;
 
-condition: expression relational_operator expression                         { $$ = RelationalConditionSemanticAction($1, $2->type, $3); free($2); }
+condition: expression relational_operator expression               { $$ = RelationalConditionSemanticAction($1, $2, $3);}
     | NOT condition                                                { $$ = NotConditionSemanticAction($2); }
     | condition AND condition                                      { $$ = LogicalConditionSemanticAction($1, $3, COND_AND); }
     | condition OR condition                                       { $$ = LogicalConditionSemanticAction($1, $3, COND_OR); }
@@ -298,7 +300,6 @@ expression: expression ADD expression                              { $$ = Binary
     | expression MUL expression                                    { $$ = BinaryExpressionSemanticAction($1, $3, EXPR_MUL); }
     | expression DIV expression                                    { $$ = BinaryExpressionSemanticAction($1, $3, EXPR_DIV); }
     | expression MOD expression                                    { $$ = BinaryExpressionSemanticAction($1, $3, EXPR_MOD); }
-    | SUB expression %prec UMINUS                                  { $$ = UnaryExpressionSemanticAction($2, EXPR_SUB); }
     | IDENTIFIER INCREMENT                                         { $$ = UnaryExpressionSemanticAction(IdentifierExpressionSemanticAction($1), EXPR_INCREMENT); }
     | INCREMENT IDENTIFIER                                         { $$ = UnaryExpressionSemanticAction(IdentifierExpressionSemanticAction($2), EXPR_PRE_INCREMENT); }
     | IDENTIFIER DECREMENT                                         { $$ = UnaryExpressionSemanticAction(IdentifierExpressionSemanticAction($1), EXPR_DECREMENT); }
