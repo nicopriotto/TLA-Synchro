@@ -120,29 +120,8 @@ Expression* FunctionCallExpressionSemanticAction(char* functionName, ArgumentLis
     return expression;
 }
 
-/* PUBLIC FUNCTIONS - Values */
-Value* ExpressionValueSemanticAction(Expression* expression) {
-    _logSyntacticAnalyzerAction(__FUNCTION__);
-    
-    Value* value = calloc(1, sizeof(Value));
-    value->expression = expression;
-    value->type = VAL_EXPRESSION;
-    
-    return value;
-}
-
-Value* ConditionValueSemanticAction(Condition* condition) {
-    _logSyntacticAnalyzerAction(__FUNCTION__);
-    
-    Value* value = calloc(1, sizeof(Value));
-    value->condition = condition;
-    value->type = VAL_CONDITION;
-    
-    return value;
-}
-
 /* PUBLIC FUNCTIONS - Conditions */
-Condition* RelationalConditionSemanticAction(Value* leftValue, RelationalOperatorType operator, Value* rightValue) {
+Condition* RelationalConditionSemanticAction(Expression* leftValue, RelationalOperatorType operator, Expression* rightValue) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     Condition* condition = calloc(1, sizeof(Condition));
@@ -214,35 +193,47 @@ TypeNode* TypeNodeSemanticAction(TypeNodeType type) {
 }
 
 /* PUBLIC FUNCTIONS - Declarations */
-Declaration* DeclarationSemanticAction(TypeNode* type, char* identifier, Constant* value) {
+DeclarationTail* DeclarationSemanticAction(Constant* value) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
-    Declaration* declaration = calloc(1, sizeof(Declaration));
-    declaration->type = type;
-    declaration->identifier = identifier;
-    declaration->value = value;
+    DeclarationTail* declarationTail = calloc(1, sizeof(DeclarationTail));
+    declarationTail->constant = value;
+    declarationTail->type = DECL_CONSTANT;
     
-    return declaration;
+    return declarationTail;
 }
 
-DeclarationList* DeclarationListSemanticAction(Declaration* declaration, DeclarationList* nextDeclarations) {
+DeclarationList* DeclarationListSemanticAction(TypeNode* type, char* identifier, DeclarationTail* declarationTail, DeclarationList* next) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
-    
+
     DeclarationList* declarationList = calloc(1, sizeof(DeclarationList));
-    declarationList->declaration = declaration;
-    declarationList->next = nextDeclarations;
-    
+    declarationList->type = type;
+    declarationList->identifier = identifier;
+    declarationList->declarationTail = declarationTail;
+    declarationList->next = next;
+
     return declarationList;
 }
 
 /* PUBLIC FUNCTIONS - Variable Declarations */
-VariableDeclaration* VariableDeclarationSemanticAction(TypeNode* type, char* identifier, Value* value) {
+VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, char* identifier, Condition* condition) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     VariableDeclaration* variableDeclaration = calloc(1, sizeof(VariableDeclaration));
     variableDeclaration->type = type;
     variableDeclaration->identifier = identifier;
-    variableDeclaration->value = value;
+    variableDeclaration->condition = condition;
+    
+    return variableDeclaration;
+}
+
+VariableDeclaration* VariableDeclarationSemanticActionExpression(TypeNode* type, char* identifier, Expression* expression) {
+    _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    VariableDeclaration* variableDeclaration = calloc(1, sizeof(VariableDeclaration));
+    variableDeclaration->type = type;
+    variableDeclaration->identifier = identifier;
+    variableDeclaration->expression = expression;
     
     return variableDeclaration;
 }
@@ -639,17 +630,15 @@ StatementList* StatementListSemanticAction(Statement* statement, StatementList* 
 }
 
 /* PUBLIC FUNCTIONS - Functions */
-Function* FunctionSemanticAction(TypeNode* returnType, char* name, ParameterList* parameters, StatementList* body, boolean isMain) {
+DeclarationTail* FunctionSemanticAction(ParameterList* parameters, StatementList* body) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
-    Function* function = calloc(1, sizeof(Function));
-    function->returnType = returnType;
-    function->name = name;
-    function->parameters = parameters;
-    function->body = body;
-    function->isMain = isMain;
+    DeclarationTail* declarationTail = calloc(1, sizeof(DeclarationTail));
+    declarationTail->function.parameterList = parameters;
+    declarationTail->function.statementList = body;
+    declarationTail->type = DECL_FUNCTION;
     
-    return function;
+    return declarationTail;
 }
 
 FunctionList* FunctionListSemanticAction(Function* function, FunctionList* nextFunctions) {
@@ -663,13 +652,11 @@ FunctionList* FunctionListSemanticAction(Function* function, FunctionList* nextF
 }
 
 /* PUBLIC FUNCTIONS - Program */
-Program* ProgramSemanticAction(DeclarationList* globalDeclarations, FunctionList* functions, CompilerState* compilerState) {
+Program* ProgramSemanticAction(DeclarationList* globalDeclarations, CompilerState* compilerState) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     Program* program = calloc(1, sizeof(Program));
     program->globalDeclarations = globalDeclarations;
-    program->functions = functions;
-    
     compilerState->abstractSyntaxtTree = program;
     
     if (0 < flexCurrentContext()) {

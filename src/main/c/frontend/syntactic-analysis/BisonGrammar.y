@@ -19,14 +19,10 @@
     Statement* statement;
     StatementList* statementList;
     Condition* condition;
-    ParameterList* parameterList;
     ArgumentList* argumentList;
     Program* program;
-    Declaration* declaration;
     DeclarationList* declarationList;
     TypeNode* typeNode;
-    Function* function;
-    FunctionList* functionList;
     Constant* constant;
     OpenStatement* openStatement;
     ClosedStatement* closedStatement;
@@ -36,7 +32,8 @@
     ForUpdate* forUpdate;
     VariableDeclaration* variableDeclaration;
     RelationalOperator* relationalOperator;
-    Value* value;
+    DeclarationTail* declarationTail;
+    ParameterList* parameterList;
 }
 
 /**
@@ -53,11 +50,9 @@
 %destructor { releaseCondition($$); } <condition>
 %destructor { releaseParameterList($$); } <parameterList>
 %destructor { releaseArgumentList($$); } <argumentList>
-%destructor { releaseDeclaration($$); } <declaration>
 %destructor { releaseDeclarationList($$); } <declarationList>
+%destructor { releaseDeclarationTail($$); } <declarationTail>
 %destructor { releaseTypeNode($$); } <typeNode>
-%destructor { releaseFunction($$); } <function>
-%destructor { releaseFunctionList($$); } <functionList>
 %destructor { releaseConstant($$); } <constant>
 %destructor { releaseOpenStatement($$); } <openStatement>
 %destructor { releaseClosedStatement($$); } <closedStatement>
@@ -67,7 +62,6 @@
 %destructor { releaseForUpdate($$); } <forUpdate>
 %destructor { releaseVariableDeclaration($$); } <variableDeclaration>
 %destructor { releaseRelationalOperator($$); } <relationalOperator>
-%destructor { releaseValue($$); } <value>
 
 /** Terminals. */
 
@@ -117,7 +111,7 @@
 %token <token> BOOLEAN_TYPE
 %token <token> SEM_TYPE
 
-%token <token> MAIN
+%token <identifier> MAIN
 
 %token <integer> INTEGER
 %token <floatVal> FLOAT
@@ -132,10 +126,6 @@
 /** Non-terminals. */
 
 %type <program> program
-%type <functionList> function_list
-%type <function> function
-%type <parameterList> parameter_list
-%type <parameterList> parameter_list_not_empty
 %type <statementList> statement_list
 %type <statement> statement
 %type <openStatement> open_statement
@@ -146,8 +136,6 @@
 %type <condition> condition_optional
 %type <argumentList> argument_list
 %type <argumentList> argument_list_not_empty
-%type <declarationList> global_declaration_list
-%type <declaration> global_declaration
 %type <typeNode> type
 %type <constant> constant
 %type <functionIdentifier> function_identifier
@@ -157,7 +145,9 @@
 %type <forUpdate> for_update_not_empty
 %type <variableDeclaration> variable_declaration
 %type <relationalOperator> relational_operator
-%type <value> value
+%type <declarationTail> declaration_tail
+%type <declarationList> declaration_list
+%type <parameterList> parameter_list
 
 /**
  * Precedence and associativity.
@@ -178,32 +168,27 @@
 
 // IMPORTANT: To use λ in the following grammar, use the %empty symbol.
 
-program: global_declaration_list function_list                     { $$ = ProgramSemanticAction($1, $2, currentCompilerState()); }
+program
+    : declaration_list                                                                             { $$ = ProgramSemanticAction($1, currentCompilerState()); } 
     ;
 
-global_declaration_list: global_declaration global_declaration_list { $$ = DeclarationListSemanticAction($1, $2); }
-    | %empty                                                       { $$ = NULL; }
+declaration_list
+    : type IDENTIFIER declaration_tail declaration_list                                            { $$ = DeclarationListSemanticAction($1, $2, $3, $4); }    
+    | type MAIN declaration_tail                                                                   { $$ = DeclarationListSemanticAction($1, $2, $3, NULL); }
+    | %empty                                                                                       { $$ = NULL; }
     ;
 
-global_declaration: type IDENTIFIER ASSIGN constant NEWLINE      { $$ = DeclarationSemanticAction($1, $2, $4); }
+declaration_tail
+    : ASSIGN constant SEMICOLON                                                                       { $$ = DeclarationSemanticAction($2); }
+    | LEFT_PARENTHESIS parameter_list RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE       { $$ = FunctionSemanticAction($2, $5); }
+    ;
+    
+parameter_list
+    : type IDENTIFIER                                           { $$ = ParameterListSemanticAction($1, $2, NULL); }
+    | type IDENTIFIER COMMA parameter_list                      { $$ = ParameterListSemanticAction($1, $2, $4); }
+    | %empty                                                    { $$ = NULL; }
     ;
 
-function_list: function function_list                              { $$ = FunctionListSemanticAction($1, $2); }
-    | %empty                                                       { $$ = NULL; }
-    ;
-
-function
-    : type IDENTIFIER LEFT_PARENTHESIS parameter_list RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE                   { $$ = FunctionSemanticAction($1, $2, $4, $7, false); }
-    | type MAIN LEFT_PARENTHESIS parameter_list RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE                         { $$ = FunctionSemanticAction($1, NULL, $4, $7, true); }
-    ;
-
-parameter_list: parameter_list_not_empty                           { $$ = $1; }
-    | %empty                                                       { $$ = NULL; }
-    ;
-
-parameter_list_not_empty: type IDENTIFIER                          { $$ = ParameterListSemanticAction($1, $2, NULL); }
-    | type IDENTIFIER COMMA parameter_list_not_empty               { $$ = ParameterListSemanticAction($1, $2, $4); }
-    ;
 
 statement_list: statement statement_list                           { $$ = StatementListSemanticAction($1, $2); }
     | %empty                                                       { $$ = NULL; }
@@ -224,7 +209,7 @@ open_statement: IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS statement
     | FOREVER open_statement                                       { $$ = ForeverOpenStatementSemanticAction($2); }
     ;
 
-closed_statement: simple_statement NEWLINE                       { $$ = SimpleClosedStatementSemanticAction($1); }
+closed_statement: simple_statement SEMICOLON                       { $$ = SimpleClosedStatementSemanticAction($1); }
     | IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS closed_statement ELSE closed_statement
                                                                   { $$ = IfElseClosedStatementSemanticAction($3, $5, $7); }
     | IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE
@@ -251,7 +236,9 @@ simple_statement: function_identifier LEFT_PARENTHESIS argument_list RIGHT_PAREN
     | variable_declaration                                         { $$ = DeclarationSimpleStatementSemanticAction($1); }
     ;
 
-variable_declaration: type IDENTIFIER ASSIGN value                 { $$ = VariableDeclarationSemanticAction($1, $2, $4); }
+variable_declaration
+: type IDENTIFIER ASSIGN condition                                 { $$ = VariableDeclarationSemanticActionCondition($1, $2, $4); }
+| type IDENTIFIER ASSIGN expression                                { $$ = VariableDeclarationSemanticActionExpression($1, $2, $4); }
     ;
 
 for_initializer: for_initializer_not_empty                         { $$ = $1; }
@@ -291,15 +278,11 @@ condition_optional: condition                                      { $$ = $1; }
     | %empty                                                       { $$ = EmptyConditionSemanticAction(); }
     ;
 
-condition: value relational_operator value                         { $$ = RelationalConditionSemanticAction($1, $2->type, $3); free($2); }
+condition: expression relational_operator expression                         { $$ = RelationalConditionSemanticAction($1, $2->type, $3); free($2); }
     | NOT condition                                                { $$ = NotConditionSemanticAction($2); }
     | condition AND condition                                      { $$ = LogicalConditionSemanticAction($1, $3, COND_AND); }
     | condition OR condition                                       { $$ = LogicalConditionSemanticAction($1, $3, COND_OR); }
     | LEFT_PARENTHESIS condition RIGHT_PARENTHESIS                 { $$ = ParenthesisConditionSemanticAction($2); }
-    ;
-
-value: expression                                                  { $$ = ExpressionValueSemanticAction($1); }
-    | condition                                                    { $$ = ConditionValueSemanticAction($1); }
     ;
 
 relational_operator: EQUALS                                        { $$ = RelationalOperatorSemanticAction(REL_EQUALS); }

@@ -26,7 +26,6 @@ typedef struct OpenStatement OpenStatement;
 typedef struct ClosedStatement ClosedStatement; 
 typedef struct SimpleStatement SimpleStatement; 
 typedef struct Condition Condition; 
-typedef struct ParameterList ParameterList; 
 typedef struct ArgumentList ArgumentList; 
 typedef struct Program Program; 
 typedef struct Declaration Declaration; 
@@ -39,8 +38,8 @@ typedef struct ForUpdate ForUpdate;
 typedef struct FunctionIdentifier FunctionIdentifier; 
 typedef struct VariableDeclaration VariableDeclaration; 
 typedef struct RelationalOperator RelationalOperator;
-typedef struct Value Value;
-
+typedef struct DeclarationTail DeclarationTail;
+typedef struct ParameterList ParameterList;
 
 /**
 
@@ -133,13 +132,6 @@ struct Expression {
 		} functionCall; 
 	}; 
 	ExpressionType type; 
-};
-
-struct Value { 
-	union { 
-		Expression* expression; 
-		Condition* condition; 
-	}; ValueType type; 
 };
 
 struct RelationalOperator {
@@ -299,9 +291,9 @@ struct StatementList {
 struct Condition { 
 	union { 
 		struct { 
-			Value* leftValue;
+			Expression* leftValue;
 			RelationalOperatorType operator; 
-			Value* rightValue; 
+			Expression* rightValue; 
 		}; 
 		struct { 
 			Condition* condition; 
@@ -328,17 +320,6 @@ struct TypeNode {
 	TypeNodeType type; 
 };
 
-struct Declaration { 
-	TypeNode* type; 
-	char* identifier; 
-	Constant* value; 
-};
-
-struct DeclarationList { 
-	Declaration* declaration; 
-	DeclarationList* next; 
-};
-
 struct ParameterList { 
 	TypeNode* type; 
 	char* identifier; 
@@ -359,7 +340,12 @@ struct FunctionIdentifier {
 struct VariableDeclaration { 
 	TypeNode* type; 
 	char* identifier; 
-	Value* value; };
+	union { 
+		Condition* condition; 
+		Expression* expression; 
+	};
+};
+
 
 struct ForInitializer { 
 	VariableDeclaration* declaration; 
@@ -372,11 +358,8 @@ struct ForUpdate {
 };
 
 struct Function { 
-	TypeNode* returnType;
-	char* name; 
 	ParameterList* parameters; 
 	StatementList* body; 
-	boolean isMain; 
 };
 
 struct FunctionList { 
@@ -384,9 +367,29 @@ struct FunctionList {
 	FunctionList* next; 
 };
 
+struct DeclarationTail {
+    union {
+        Constant* constant;
+        struct {
+            ParameterList* parameterList;
+            StatementList* statementList;
+        } function;
+    };
+    enum {
+        DECL_CONSTANT,
+        DECL_FUNCTION
+    } type;
+};
+
+struct DeclarationList {
+	TypeNode* type;
+	char* identifier;
+	DeclarationTail* declarationTail;
+	DeclarationList* next;
+};
+
 struct Program { 
 	DeclarationList* globalDeclarations; 
-	FunctionList* functions; 
 };
 
 
@@ -413,6 +416,5 @@ void releaseForInitializer(ForInitializer* forInitializer);
 void releaseForUpdate(ForUpdate* forUpdate); 
 void releaseVariableDeclaration(VariableDeclaration* variableDeclaration); 
 void releaseRelationalOperator(RelationalOperator* relationalOperator);
-void releaseValue(Value* value);
+void releaseDeclarationTail(DeclarationTail* declarationTail);
 #endif
-

@@ -52,6 +52,7 @@ SyntacticAnalysisStatus parse(CompilerState * compilerState) {
 	_currentCompilerState = NULL;
 	SyntacticAnalysisStatus syntacticAnalysisStatus;
 	logDebugging(_logger, "Parsing is done.");
+	
 	switch (code) {
 		case 0:
 			if (compilerState->succeed == true) {
@@ -60,6 +61,7 @@ SyntacticAnalysisStatus parse(CompilerState * compilerState) {
 			else {
 				syntacticAnalysisStatus = REJECT;
 			}
+			break;  // Add this break statement
 		case 1:
 			syntacticAnalysisStatus = REJECT;
 			break;
@@ -71,8 +73,7 @@ SyntacticAnalysisStatus parse(CompilerState * compilerState) {
 			logError(_logger, "Unknown error inside Bison engine (code = %d).", code);
 			syntacticAnalysisStatus = UNKNOWN_ERROR;
 	}
+	
 	compilerState->succeed = false;
 	return syntacticAnalysisStatus;
 }
-
-

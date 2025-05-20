@@ -25,12 +25,8 @@ Expression* BinaryExpressionSemanticAction(Expression* leftExpression, Expressio
 Expression* UnaryExpressionSemanticAction(Expression* subExpression, ExpressionType type);
 Expression* FunctionCallExpressionSemanticAction(char* functionName, ArgumentList* arguments);
 
-/** Values */
-Value* ExpressionValueSemanticAction(Expression* expression);
-Value* ConditionValueSemanticAction(Condition* condition);
-
 /** Conditions */
-Condition* RelationalConditionSemanticAction(Value* leftValue, RelationalOperatorType operator, Value* rightValue);
+Condition* RelationalConditionSemanticAction(Expression* leftValue, RelationalOperatorType operator, Expression* rightValue);
 Condition* NotConditionSemanticAction(Condition* subCondition);
 Condition* LogicalConditionSemanticAction(Condition* leftCondition, Condition* rightCondition, int logicalType);
 Condition* ParenthesisConditionSemanticAction(Condition* subCondition);
@@ -43,11 +39,14 @@ RelationalOperator* RelationalOperatorSemanticAction(RelationalOperatorType oper
 TypeNode* TypeNodeSemanticAction(TypeNodeType type);
 
 /** Declarations */
-Declaration* DeclarationSemanticAction(TypeNode* type, char* identifier, Constant* value);
-DeclarationList* DeclarationListSemanticAction(Declaration* declaration, DeclarationList* nextDeclarations);
+DeclarationTail* DeclarationSemanticAction(Constant* value);
+DeclarationList* DeclarationListSemanticAction(TypeNode* type, char* identifier, DeclarationTail* declarationTail, DeclarationList* next);
 
 /** Variable Declarations */
-VariableDeclaration* VariableDeclarationSemanticAction(TypeNode* type, char* identifier, Value* value);
+VariableDeclaration* VariableDeclarationSemanticActionExpression(TypeNode* type, char* identifier, Expression* value);
+VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, char* identifier, Condition* value);
+
+
 
 /** Function identifiers */
 FunctionIdentifier* FunctionIdentifierSemanticAction(FunctionIdentifierType type, char* identifier);
@@ -91,8 +90,8 @@ Statement* ClosedStatementSemanticAction(ClosedStatement* closedStmt);
 StatementList* StatementListSemanticAction(Statement* stmt, StatementList* nextStatements);
 
 /** Functions & program */
-Function* FunctionSemanticAction(TypeNode* returnType, char* name, ParameterList* parameters, StatementList* body, boolean isMain);
+DeclarationTail* FunctionSemanticAction(ParameterList* parameters, StatementList* body);
 FunctionList* FunctionListSemanticAction(Function* function, FunctionList* nextFunctions);
-Program* ProgramSemanticAction(DeclarationList* globalDeclarations, FunctionList* functions, CompilerState* compilerState);
+Program* ProgramSemanticAction(DeclarationList* globalDeclarations, CompilerState* compilerState);
 
 #endif /* BISON_ACTIONS_HEADER */

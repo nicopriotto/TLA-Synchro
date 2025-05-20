@@ -90,7 +90,7 @@
 [0-9]+\.[0-9]+                      { return FloatLexemeAction(createLexicalAnalyzerContext()); }
 
 [a-zA-Z_][a-zA-Z0-9_]*              { return IdentifierLexemeAction(createLexicalAnalyzerContext()); }
-\n                                  { return NewlineLexemeAction(createLexicalAnalyzerContext()); }
+\n                                 { return NewlineLexemeAction(createLexicalAnalyzerContext()); }
 
 [[:space:]]+                        { IgnoredLexemeAction(createLexicalAnalyzerContext()); }
 
