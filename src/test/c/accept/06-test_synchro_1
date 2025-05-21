@@ -1,0 +1,44 @@
+sem mutex = 1;
+sem queue = 1;
+sem db = 1;
+int rc = 0;
+int wc = 0;
+
+int reader() {
+    forever {
+        down(queue);
+        down(mutex);
+        rc++;
+        if ( 1 ) {
+            down(db);
+        }
+        up(queue);
+        up(mutex);
+
+        print("LEYENDO BASE DE DATOS");
+
+        down(mutex);
+        rc--;
+        if( 0 ) {
+            up(db);
+        }
+        up(mutex);
+        print("USANDO BASE DE DATOS");
+    }
+}
+
+int writer() {
+    forever {
+       down(queue);
+       down(db);
+       up(queue);
+       print("ESCRIBIENDO EN LA BASE DE DATOS");    
+       sleep(5); // Tiempo de "escritura" en la base de datos
+       up(db);  
+    }  
+}
+
+int main() {
+  writer();
+  reader();
+}

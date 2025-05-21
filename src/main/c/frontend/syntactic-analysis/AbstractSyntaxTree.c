@@ -24,7 +24,7 @@ void shutdownAbstractSyntaxTreeModule() {
 static char* duplicateString(const char* str) {
     if (!str) return NULL;
     size_t len = strlen(str);
-    char* result = (char*)malloc(len + 1);
+    char* result = (char*)calloc(len + 1, sizeof(char));
     if (!result) {
         logError(_logger, "Memory allocation failed for string duplication");
         return NULL;
@@ -152,6 +152,7 @@ Expression* createExpressionUnary(ExpressionType type, Expression* expr) {
     return result;
 }
 
+
 Expression* createExpressionFunctionCall(const char* name, ArgumentList* args) {
     if (!name) return NULL;
     
@@ -175,8 +176,6 @@ Expression* createExpressionFunctionCall(const char* name, ArgumentList* args) {
 
 void releaseConstant(Constant* constant) {
     if (!constant) return;
-    
-    logDebugging(_logger, "Releasing constant of type %d", constant->type);
     
     if (constant->type == CONST_STRING && constant->string) {
         SAFE_FREE(constant->string);
@@ -223,9 +222,7 @@ void releaseRelationalOperator(RelationalOperator* op) {
 void releaseSimpleStatement(SimpleStatement* ss) {
     if (!ss) return;
     
-    logDebugging(_logger, "Releasing simple statement of type %d", ss->type);
-    
-    switch (ss->type) {
+    switch(ss->type) {
         case SIMPLE_FUNCTION_CALL:
             releaseFunctionIdentifier(ss->functionCall.function);
             releaseArgumentList(ss->functionCall.arguments);
@@ -368,6 +365,7 @@ void releaseStatementList(StatementList* sl) {
     // Use an iterative approach to avoid stack overflow for large lists
     StatementList* current = sl;
     StatementList* next = NULL;
+
     
     while (current) {
         next = current->next;
@@ -462,6 +460,7 @@ void releaseDeclarationList(DeclarationList* dl) {
     while (current) {
         next = current->next;
         releaseTypeNode(current->type);
+        logDebugging(_logger, "THIS IS THE IDENTIFIER!! %s", current->identifier != NULL ? current->identifier : "NULL");
         SAFE_FREE(current->identifier);
         releaseDeclarationTail(current->declarationTail);
         SAFE_FREE(current);
@@ -547,10 +546,13 @@ void releaseVariableDeclaration(VariableDeclaration* vd) {
     releaseTypeNode(vd->type);
     SAFE_FREE(vd->identifier);
     
-    if (vd->uniontype == CONDITION) {
-        releaseCondition(vd->condition);
-    } else if (vd->uniontype == EXPRESSION) {
-        releaseExpression(vd->expression);
+    switch(vd->uniontype){
+        case CONDITION:
+            releaseCondition(vd->condition);
+            break;
+        case EXPRESSION:
+            releaseExpression(vd->expression);
+            break;
     }
     
     SAFE_FREE(vd);
@@ -558,7 +560,6 @@ void releaseVariableDeclaration(VariableDeclaration* vd) {
 
 void releaseProgram(Program* p) {
     if (!p) return;
-    
     logDebugging(_logger, "Releasing program");
     releaseDeclarationList(p->globalDeclarations);
     SAFE_FREE(p);

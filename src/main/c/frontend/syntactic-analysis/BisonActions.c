@@ -176,7 +176,7 @@ Condition* EmptyConditionSemanticAction() {
 /* PUBLIC FUNCTIONS - Relational Operator */
 
 RelationalOperator* RelationalOperatorSemanticAction(RelationalOperatorType type) {
-    RelationalOperator* op = malloc(sizeof(RelationalOperator));
+    RelationalOperator* op = calloc(1, sizeof(RelationalOperator));
     if (!op) return NULL;  
     op->type = type;
     return op;

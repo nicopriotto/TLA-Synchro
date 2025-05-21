@@ -112,7 +112,7 @@ Token StringLexemeAction(LexicalAnalyzerContext* lexicalAnalyzerContext) {
     size_t len = lexicalAnalyzerContext->length;
     char* rawString = lexicalAnalyzerContext->lexeme;
 
-    char* unquoted = (char*)malloc(len - 1);
+    char* unquoted = (char*)calloc(len - 1, sizeof(char));
     if (unquoted != NULL) {
         strncpy(unquoted, rawString + 1, len - 2);
         unquoted[len - 2] = '\0';

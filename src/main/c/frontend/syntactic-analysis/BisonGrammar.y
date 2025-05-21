@@ -113,7 +113,7 @@
 %token <token> BOOLEAN_TYPE
 %token <token> SEM_TYPE
 
-%token <token> MAIN
+%token <identifier> MAIN
 
 %token <integer> INTEGER
 %token <floatVal> FLOAT
@@ -200,8 +200,10 @@ statement: open_statement                                          { $$ = OpenSt
     | closed_statement                                             { $$ = ClosedStatementSemanticAction($1); }
     ;
 
-open_statement: IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS statement
-                                                                  { $$ = IfOpenStatementSemanticAction($3, $5); }
+open_statement: IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS statement{ $$ = IfOpenStatementSemanticAction($3, $5); }
+
+    | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS statement { $$ = IfOpenStatementSemanticAction($3, $5); }
+
     | IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS closed_statement ELSE open_statement
                                                                   { $$ = IfElseOpenStatementSemanticAction($3, ClosedStatementSemanticAction($5), $7); }
     | WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS open_statement

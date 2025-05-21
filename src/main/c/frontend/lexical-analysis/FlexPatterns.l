@@ -64,7 +64,7 @@
 "="                                 { return SymbolLexemeAction(createLexicalAnalyzerContext(), ASSIGN); }
 
 "thread"                            { return KeywordLexemeAction(createLexicalAnalyzerContext(), THREAD); }
-"main"                              { return KeywordLexemeAction(createLexicalAnalyzerContext(), MAIN); }
+"main"                              { return IdentifierLexemeAction(createLexicalAnalyzerContext()); }
 "up"                                { return KeywordLexemeAction(createLexicalAnalyzerContext(), UP); }
 "down"                              { return KeywordLexemeAction(createLexicalAnalyzerContext(), DOWN); }
 
