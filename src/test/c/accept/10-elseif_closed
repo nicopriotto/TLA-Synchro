@@ -1,0 +1,8 @@
+int main() {
+  if ( 1 )
+    int a = 1;
+  else {
+    int b = 3;
+    int a = 5;
+  }
+}

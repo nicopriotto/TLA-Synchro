@@ -73,7 +73,8 @@ enum StatementType {
     STMT_IF_ELSE, 
     STMT_WHILE, 
     STMT_FOR, 
-    STMT_FOREVER 
+    STMT_FOREVER,
+    STMT_BLOCK 
 };
     
 enum TypeNodeType { 
@@ -266,6 +267,19 @@ struct ClosedStatement {
         struct { 
             StatementList* body; 
         } foreverBlock; 
+        struct {
+            Condition* condition;
+            ClosedStatement* thenStatement;
+            StatementList* elseStatement;
+        } elseClosedIfElse;
+        struct {
+            Condition* condition;
+            StatementList* thenStatement;
+            StatementList* elseStatement;
+        } doubleClosedIfElse;
+        struct {
+            StatementList* statementList;
+        } statementList;
     }; 
     enum { 
         CLOSED_SIMPLE, 
@@ -276,7 +290,10 @@ struct ClosedStatement {
         CLOSED_FOR, 
         CLOSED_FOR_BLOCK, 
         CLOSED_FOREVER, 
-        CLOSED_FOREVER_BLOCK 
+        CLOSED_FOREVER_BLOCK,
+        DOUBLE_CLOSED_IF_ELSE,
+        ELSE_CLOSED_IF_ELSE,
+        STATEMENT_LIST
     } type; 
 };
 

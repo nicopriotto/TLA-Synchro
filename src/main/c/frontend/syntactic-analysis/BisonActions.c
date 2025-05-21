@@ -462,6 +462,17 @@ ClosedStatement* SimpleClosedStatementSemanticAction(SimpleStatement* simpleStat
     return closedStatement;
 }
 
+ClosedStatement* ClosedStatementListSemanticAction(StatementList* statementList){
+    _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    ClosedStatement* closedStatement = calloc(1, sizeof(ClosedStatement));
+    closedStatement->statementList.statementList = statementList;
+    closedStatement->type = STATEMENT_LIST;
+    
+    return closedStatement;
+}
+
+
 ClosedStatement* IfElseClosedStatementSemanticAction(Condition* condition, ClosedStatement* thenStatement, ClosedStatement* elseStatement) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
@@ -470,6 +481,18 @@ ClosedStatement* IfElseClosedStatementSemanticAction(Condition* condition, Close
     closedStatement->ifElseStatement.thenStatement = thenStatement;
     closedStatement->ifElseStatement.elseStatement = elseStatement;
     closedStatement->type = CLOSED_IF_ELSE;
+    
+    return closedStatement;
+}
+
+ClosedStatement* IfElseBracesClosedStatementSemanticAction(Condition* condition, ClosedStatement* thenStatement, StatementList* elseStatement){
+    _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    ClosedStatement* closedStatement = calloc(1, sizeof(ClosedStatement));
+    closedStatement->elseClosedIfElse.condition = condition;
+    closedStatement->elseClosedIfElse.thenStatement = thenStatement;
+    closedStatement->elseClosedIfElse.elseStatement = elseStatement;
+    closedStatement->type = ELSE_CLOSED_IF_ELSE;
     
     return closedStatement;
 }
@@ -484,6 +507,19 @@ ClosedStatement* IfBlockClosedStatementSemanticAction(Condition* condition, Stat
     
     return closedStatement;
 }
+
+ClosedStatement* IfElseBlockClosedStatementSemanticAction(Condition* condition, StatementList* thenStatement, StatementList* elseStatement){
+    _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    ClosedStatement* closedStatement = calloc(1, sizeof(ClosedStatement));
+    closedStatement->doubleClosedIfElse.condition = condition;
+    closedStatement->doubleClosedIfElse.thenStatement = thenStatement;
+    closedStatement->doubleClosedIfElse.elseStatement = elseStatement;
+    closedStatement->type = DOUBLE_CLOSED_IF_ELSE;
+    
+    return closedStatement;
+}
+
 
 ClosedStatement* WhileClosedStatementSemanticAction(Condition* condition, ClosedStatement* body) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
@@ -614,7 +650,7 @@ Statement* ClosedStatementSemanticAction(ClosedStatement* closedStatement) {
             statement->type = STMT_IF;
             statement->ifStatement.condition = closedStatement->ifBlock.condition;
             statement->ifStatement.thenStatement = calloc(1, sizeof(Statement));
-            statement->ifStatement.thenStatement->type = STMT_SIMPLE; 
+            statement->ifStatement.thenStatement->type = STMT_BLOCK; 
             statement->ifStatement.thenStatement->blockStatement = closedStatement->ifBlock.body;
             break;
         case CLOSED_WHILE:
@@ -626,7 +662,7 @@ Statement* ClosedStatementSemanticAction(ClosedStatement* closedStatement) {
             statement->type = STMT_WHILE;
             statement->whileStatement.condition = closedStatement->whileBlock.condition;
             statement->whileStatement.body = calloc(1, sizeof(Statement));
-            statement->whileStatement.body->type = STMT_SIMPLE; 
+            statement->whileStatement.body->type = STMT_BLOCK; 
             statement->whileStatement.body->blockStatement = closedStatement->whileBlock.body;
             break;
         case CLOSED_FOR:
@@ -642,7 +678,7 @@ Statement* ClosedStatementSemanticAction(ClosedStatement* closedStatement) {
             statement->forStatement.condition = closedStatement->forBlock.condition;
             statement->forStatement.update = closedStatement->forBlock.update;
             statement->forStatement.body = calloc(1, sizeof(Statement));
-            statement->forStatement.body->type = STMT_SIMPLE; 
+            statement->forStatement.body->type = STMT_BLOCK; 
             statement->forStatement.body->blockStatement = closedStatement->forBlock.body;
             break;
         case CLOSED_FOREVER:
@@ -652,7 +688,7 @@ Statement* ClosedStatementSemanticAction(ClosedStatement* closedStatement) {
         case CLOSED_FOREVER_BLOCK:
             statement->type = STMT_FOREVER;
             statement->foreverStatement.body = calloc(1, sizeof(Statement));
-            statement->foreverStatement.body->type = STMT_SIMPLE; 
+            statement->foreverStatement.body->type = STMT_BLOCK; 
             statement->foreverStatement.body->blockStatement = closedStatement->foreverBlock.body;
             break;
     }

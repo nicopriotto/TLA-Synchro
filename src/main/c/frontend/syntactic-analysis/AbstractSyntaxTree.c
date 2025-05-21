@@ -221,7 +221,6 @@ void releaseRelationalOperator(RelationalOperator* op) {
 
 void releaseSimpleStatement(SimpleStatement* ss) {
     if (!ss) return;
-    
     switch(ss->type) {
         case SIMPLE_FUNCTION_CALL:
             releaseFunctionIdentifier(ss->functionCall.function);
@@ -326,6 +325,19 @@ void releaseClosedStatement(ClosedStatement* cs) {
         case CLOSED_FOREVER_BLOCK:
             releaseStatementList(cs->foreverBlock.body);
             break;
+        case DOUBLE_CLOSED_IF_ELSE:
+            releaseCondition(cs->doubleClosedIfElse.condition);
+            releaseStatementList(cs->doubleClosedIfElse.thenStatement);
+            releaseStatementList(cs->doubleClosedIfElse.elseStatement);
+            break;
+        case ELSE_CLOSED_IF_ELSE:
+            releaseCondition(cs->elseClosedIfElse.condition);
+            releaseClosedStatement(cs->elseClosedIfElse.thenStatement);
+            releaseStatementList(cs->elseClosedIfElse.elseStatement);
+            break;
+        case STATEMENT_LIST:
+            releaseStatementList(cs->statementList.statementList);
+            break;
     }
     SAFE_FREE(cs);
 }
@@ -361,6 +373,9 @@ void releaseStatement(Statement* stmt) {
         case STMT_FOREVER:
             releaseStatement(stmt->foreverStatement.body);
             break;
+        case STMT_BLOCK:
+            releaseStatementList(stmt->blockStatement);
+            break;
     }
     SAFE_FREE(stmt);
 }
@@ -372,7 +387,7 @@ void releaseStatementList(StatementList* sl) {
     StatementList* current = sl;
     StatementList* next = NULL;
 
-    
+    int i = 0;
     while (current) {
         next = current->next;
         releaseStatement(current->statement);
