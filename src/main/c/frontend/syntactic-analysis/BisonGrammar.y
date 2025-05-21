@@ -228,8 +228,8 @@ closed_statement: simple_statement SEMICOLON                       { $$ = Simple
     | FOREVER LEFT_BRACE statement_list RIGHT_BRACE                { $$ = ForeverBlockClosedStatementSemanticAction($3); }
     ;
 
-simple_statement: function_identifier LEFT_PARENTHESIS argument_list RIGHT_PARENTHESIS
-                                                                  { $$ = FunctionCallSimpleStatementSemanticAction($1, $3); }
+simple_statement
+    : function_identifier LEFT_PARENTHESIS argument_list RIGHT_PARENTHESIS  { $$ = FunctionCallSimpleStatementSemanticAction($1, $3); }
     | IDENTIFIER INCREMENT                                         { $$ = IncrementSimpleStatementSemanticAction($1, false); }
     | INCREMENT IDENTIFIER                                         { $$ = IncrementSimpleStatementSemanticAction($2, true); }
     | IDENTIFIER DECREMENT                                         { $$ = DecrementSimpleStatementSemanticAction($1, false); }
@@ -268,7 +268,8 @@ function_identifier: PRINT                                         { $$ = Functi
     | IDENTIFIER                                                   { $$ = FunctionIdentifierSemanticAction(FUNC_USER_DEFINED, $1); }
     ;
 
-argument_list: argument_list_not_empty                             { $$ = $1; }
+argument_list
+    : argument_list_not_empty                                      { $$ = $1; }
     | %empty                                                       { $$ = NULL; }
     ;
 

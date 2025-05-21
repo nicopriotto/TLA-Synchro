@@ -15,7 +15,7 @@ int reader() {
         up(queue);
         up(mutex);
 
-        print("LEYENDO BASE DE DATOS");
+        print("READING FROM DB");
 
         down(mutex);
         rc--;
@@ -23,22 +23,27 @@ int reader() {
             up(db);
         }
         up(mutex);
-        print("USANDO BASE DE DATOS");
+        print("USING DB");
     }
 }
 
-int writer() {
+int writer(string name) {
     forever {
        down(queue);
        down(db);
        up(queue);
-       print("ESCRIBIENDO EN LA BASE DE DATOS");    
-       sleep(5); // Tiempo de "escritura" en la base de datos
+       print("WRITING DB") ;   
+       sleep(5); // "writing" time simulation
        up(db);  
     }  
 }
 
+/*
+*  main function
+*
+*/
+
 int main() {
-  writer();
-  reader();
+  thread(writer("Pepe"));
+  thread(reader);
 }

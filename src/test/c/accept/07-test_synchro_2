@@ -17,6 +17,6 @@ int B() {
 }
 
 int main() {
-   A();
-   B();
+    thread(A, 2);   
+    thread(B, 5);
 }

@@ -87,13 +87,13 @@
 "true"                              { return BooleanLexemeAction(createLexicalAnalyzerContext()); }
 "false"                             { return BooleanLexemeAction(createLexicalAnalyzerContext()); }
 \"[^\"]*\"                          { return StringLexemeAction(createLexicalAnalyzerContext()); }
-[0-9]+                              { return IntegerLexemeAction(createLexicalAnalyzerContext()); }
 [0-9]+\.[0-9]+                      { return FloatLexemeAction(createLexicalAnalyzerContext()); }
+[0-9]+                              { return IntegerLexemeAction(createLexicalAnalyzerContext()); }
 
 [a-zA-Z_][a-zA-Z0-9_]*              { return IdentifierLexemeAction(createLexicalAnalyzerContext()); }
-'\n'                                { IgnoredLexemeAction(createLexicalAnalyzerContext()); }
+\r?\n                               { IgnoredLexemeAction(createLexicalAnalyzerContext()); }
 
-[[:space:]]+                        { IgnoredLexemeAction(createLexicalAnalyzerContext()); }
+[[:blank:]]+                        { IgnoredLexemeAction(createLexicalAnalyzerContext()); }
 
 .                                   { return UnknownLexemeAction(createLexicalAnalyzerContext()); }
 
