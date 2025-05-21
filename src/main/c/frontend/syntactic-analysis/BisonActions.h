@@ -29,9 +29,7 @@ Expression* FunctionCallExpressionSemanticAction(char* functionName, ArgumentLis
 Condition* RelationalConditionSemanticAction(Expression* leftValue, RelationalOperator* operator, Expression* rightValue);
 Condition* NotConditionSemanticAction(Condition* subCondition);
 Condition* LogicalConditionSemanticAction(Condition* leftCondition, Condition* rightCondition, int logicalType);
-Condition* ParenthesisConditionSemanticAction(Condition* subCondition);
 Condition* EmptyConditionSemanticAction(void);
-Condition* ConstantConditionSemanticAction(Constant* constant);
 Condition* ExpressionAsConditionSemanticAction(Expression* expression);
 
 /** Relational Operators */
@@ -45,7 +43,6 @@ DeclarationTail* DeclarationSemanticAction(Constant* value);
 DeclarationList* DeclarationListSemanticAction(TypeNode* type, char* identifier, DeclarationTail* declarationTail, DeclarationList* next);
 
 /** Variable Declarations */
-VariableDeclaration* VariableDeclarationSemanticActionExpression(TypeNode* type, char* identifier, Expression* value);
 VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, char* identifier, Condition* value);
 
 
@@ -75,22 +72,17 @@ OpenStatement* IfOpenStatementSemanticAction(Condition* condition, Statement* th
 OpenStatement* IfElseOpenStatementSemanticAction(Condition* condition, Statement* thenStatement, OpenStatement* elseStatement);
 OpenStatement* WhileOpenStatementSemanticAction(Condition* condition, OpenStatement* body);
 OpenStatement* ForOpenStatementSemanticAction(ForInitializer* initializer, Condition* condition, ForUpdate* update, OpenStatement* body);
-OpenStatement* ForeverOpenStatementSemanticAction(OpenStatement* body);
 
 /** Closed statements (terminated by newline or explicit block) */
 ClosedStatement* SimpleClosedStatementSemanticAction(SimpleStatement* simple);
 ClosedStatement* ClosedListStatementSemanticAction(StatementList* statementList);
-ClosedStatement* IfClosedStatementSemanticAction(Condition* condition, ClosedStatement* thenStmt);
 ClosedStatement* IfElseClosedStatementSemanticAction(Condition* condition, ClosedStatement* thenStmt, ClosedStatement* elseStmt);
 ClosedStatement* IfElseBracesClosedStatementSemanticAction(Condition* condition, ClosedStatement* thenStmt, StatementList* elseStmt);
 ClosedStatement* IfBlockClosedStatementSemanticAction(Condition* condition, StatementList* body);
 ClosedStatement* IfElseBlockClosedStatementSemanticAction(Condition* condition, StatementList* body, StatementList* elseBody);
 ClosedStatement* WhileClosedStatementSemanticAction(Condition* condition, ClosedStatement* body);
-ClosedStatement* WhileBlockClosedStatementSemanticAction(Condition* condition, StatementList* body);
 ClosedStatement* ForClosedStatementSemanticAction(ForInitializer* initializer, Condition* condition, ForUpdate* update, ClosedStatement* body);
-ClosedStatement* ForBlockClosedStatementSemanticAction(ForInitializer* initializer, Condition* condition, ForUpdate* update, StatementList* body);
 ClosedStatement* ForeverClosedStatementSemanticAction(ClosedStatement* body);
-ClosedStatement* ForeverBlockClosedStatementSemanticAction(StatementList* body);
 
 /** General statements & statement lists */
 Statement* OpenStatementSemanticAction(OpenStatement* openStmt);

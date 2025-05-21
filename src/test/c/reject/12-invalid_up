@@ -1,0 +1,14 @@
+sem mutex = 1;
+
+int B() {
+    while(1) {
+        down(mutex);
+        print("ACCESO SECCION CRITICA - B");
+        up mutex;
+    }
+}
+
+int main() { 
+    thread(B, 5);
+    return status;
+}

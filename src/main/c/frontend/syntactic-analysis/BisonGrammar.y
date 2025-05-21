@@ -173,7 +173,7 @@ program
     ;
 
 declarationList
-    : type IDENTIFIER declarationTail declarationList                                                   {$$ = DeclarationListSemanticAction($1, $2, $3, $4); }    
+    : type IDENTIFIER declarationTail declarationList                                                   { $$ = DeclarationListSemanticAction($1, $2, $3, $4); }    
     | type MAIN declarationTail                                                                         { $$ = DeclarationListSemanticAction($1, $2, $3, NULL); }
     | %empty                                                                                            { $$ = NULL; }
     ;
@@ -192,7 +192,6 @@ parameterList
 
 statementList
     : statement statementList                                                                           { $$ = StatementListSemanticAction($1, $2); }
-    /* | LEFT_BRACE statementList RIGHT_BRACE                                                              { $$ = $2; }  */
     | %empty                                                                                            { $$ = NULL; }
     ;
 
@@ -204,23 +203,17 @@ statement
 openStatement
     : IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS statement                                                                                     { $$ = IfOpenStatementSemanticAction($3, $5); } 
     | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closedStatement ELSE openStatement                                                            { $$ = IfElseOpenStatementSemanticAction($3, ClosedStatementSemanticAction($5), $7); }
-    /* | LEFT_BRACE statementList RIGHT_BRACE                                                                                                          { $$ = OpenListStatmentSemanticAction($2);} */
     | WHILE LEFT_PARENTHESIS condition RIGHT_PARENTHESIS openStatement                                                                              { $$ = WhileOpenStatementSemanticAction($3, $5); }
     | FOR LEFT_PARENTHESIS forInitializer SEMICOLON conditionOptional SEMICOLON forUpdate RIGHT_PARENTHESIS openStatement                           { $$ = ForOpenStatementSemanticAction($3, $5, $7, $9); }
-    /* | FOREVER openStatement                                                                                                                         { $$ = ForeverOpenStatementSemanticAction($2); } */
     ;
 
 closedStatement
     : simpleStatement SEMICOLON                                                                                                                     { $$ = SimpleClosedStatementSemanticAction($1); }
-    /* | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closedStatement                                                                               { $$ = IfClosedStatementSemanticAction($3, $5); }  */
     | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closedStatement ELSE closedStatement                                                          { $$ = IfElseClosedStatementSemanticAction($3, $5, $7); }
-    | LEFT_BRACE statementList RIGHT_BRACE                                                                                                    { $$ = ClosedListStatementSemanticAction($2);}
+    | LEFT_BRACE statementList RIGHT_BRACE                                                                                                          { $$ = ClosedListStatementSemanticAction($2);}
     | WHILE LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closedStatement                                                                            { $$ = WhileClosedStatementSemanticAction($3, $5); }
-  /*  | WHILE LEFT_PARENTHESIS condition RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE                                                       { $$ = WhileBlockClosedStatementSemanticAction($3, $6); }*/
     | FOR LEFT_PARENTHESIS forInitializer SEMICOLON conditionOptional SEMICOLON forUpdate RIGHT_PARENTHESIS closedStatement                         { $$ = ForClosedStatementSemanticAction($3, $5, $7, $9); }
-  /*  | FOR LEFT_PARENTHESIS forInitializer SEMICOLON conditionOptional SEMICOLON forUpdate RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE    { $$ = ForBlockClosedStatementSemanticAction($3, $5, $7, $10); } */
     | FOREVER closedStatement                                                                                                                       { $$ = ForeverClosedStatementSemanticAction($2); }
- /*   | FOREVER LEFT_BRACE statementList RIGHT_BRACE                                                                                                  { $$ = ForeverBlockClosedStatementSemanticAction($3); } */
     ;
 
 simpleStatement
@@ -237,7 +230,6 @@ simpleStatement
 
 variableDeclaration
     : type IDENTIFIER ASSIGN condition                                                                                                              { $$ = VariableDeclarationSemanticActionCondition($1, $2, $4); }
-/*  | type IDENTIFIER ASSIGN expression { $$ = VariableDeclarationSemanticActionExpression($1, $2, $4); } */
     ;
 
 forInitializer: forInitializerNotEmpty                                                                                                              { $$ = $1; }
@@ -283,8 +275,6 @@ condition
     | NOT condition                                                 { $$ = NotConditionSemanticAction($2); }
     | condition AND condition                                       { $$ = LogicalConditionSemanticAction($1, $3, COND_AND); }
     | condition OR condition                                        { $$ = LogicalConditionSemanticAction($1, $3, COND_OR); }
-    /* | LEFT_PARENTHESIS condition RIGHT_PARENTHESIS { $$ = ParenthesisConditionSemanticAction($2); } */
-    /* | constant   { $$ = ConstantConditionSemanticAction($1); } */
     | expression                                                    { $$ = ExpressionAsConditionSemanticAction($1); }
     ;
 

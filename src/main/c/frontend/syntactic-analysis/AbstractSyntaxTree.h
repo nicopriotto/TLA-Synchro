@@ -227,9 +227,7 @@ struct OpenStatement {
         OPEN_IF, 
         OPEN_IF_ELSE, 
         OPEN_WHILE, 
-        OPEN_FOR, 
-        OPEN_FOREVER,
-        OPEN_STATEMENT_LIST
+        OPEN_FOR
     } type; 
 };
 
@@ -243,16 +241,8 @@ struct ClosedStatement {
         } ifElseStatement; 
         struct { 
             Condition* condition; 
-            StatementList* body; 
-        } ifBlock; 
-        struct { 
-            Condition* condition; 
             ClosedStatement* body; 
         } whileStatement; 
-        struct { 
-            Condition* condition; 
-            StatementList* body; 
-        } whileBlock; 
         struct { 
             ForInitializer* initializer; 
             Condition* condition; 
@@ -260,49 +250,19 @@ struct ClosedStatement {
             ClosedStatement* body; 
         } forStatement; 
         struct { 
-            ForInitializer* initializer; 
-            Condition* condition; 
-            ForUpdate* update; 
-            StatementList* body; 
-        } forBlock; 
-        struct { 
             ClosedStatement* body; 
         } foreverStatement; 
-        struct { 
-            StatementList* body; 
-        } foreverBlock; 
-        struct {
-            Condition* condition;
-            ClosedStatement* thenStatement;
-            StatementList* elseStatement;
-        } elseClosedIfElse;
-        struct {
-            Condition* condition;
-            StatementList* thenStatement;
-            StatementList* elseStatement;
-        } doubleClosedIfElse;
         struct {
             StatementList* statementList;
         } closedStatementList;
-        struct {
-            Condition* condition;
-            ClosedStatement* thenStatement;
-        } ifClosed;
     }; 
     enum { 
         CLOSED_SIMPLE, 
         CLOSED_IF_ELSE, 
-        CLOSED_IF_BLOCK, 
         CLOSED_WHILE, 
-        CLOSED_WHILE_BLOCK, 
         CLOSED_FOR, 
-        CLOSED_FOR_BLOCK, 
         CLOSED_FOREVER, 
-        CLOSED_FOREVER_BLOCK,
-        DOUBLE_CLOSED_IF_ELSE,
-        ELSE_CLOSED_IF_ELSE,
-        CLOSED_STATEMENT_LIST,
-        CLOSED_IF
+        CLOSED_STATEMENT_LIST
     } type; 
 };
 
@@ -322,15 +282,9 @@ struct Condition {
             Condition* condition; 
         } not; 
         struct { 
-            Condition* condition; 
-        } parenthesis; 
-        struct { 
             Condition* leftCondition; 
             Condition* rightCondition; 
         } logical; 
-        struct {
-            Constant* constant;
-        } constant;
         struct {
             Expression* expression;
         } expression;
@@ -340,9 +294,7 @@ struct Condition {
         COND_NOT, 
         COND_AND, 
         COND_OR, 
-        COND_PARENTHESIS, 
         COND_EMPTY,
-        COND_CONSTANT,
         COND_EXPRESSION
     } type; 
 };
@@ -370,14 +322,7 @@ struct FunctionIdentifier {
 struct VariableDeclaration { 
     TypeNode* type; 
     char* identifier; 
-    union { 
-        Condition* condition; 
-        Expression* expression; 
-    };
-    enum {
-        CONDITION,
-        EXPRESSION
-    } uniontype;
+    Condition* condition; 
 };
 
 struct ForInitializer { 

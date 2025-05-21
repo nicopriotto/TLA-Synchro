@@ -1,0 +1,9 @@
+int main() {
+    if (x < 0) {
+        print("negativo");
+    } else (x == 0) {
+        print("cero");
+    } else {
+        print("positivo");
+    }
+}

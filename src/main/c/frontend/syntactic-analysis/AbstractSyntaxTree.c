@@ -6,12 +6,12 @@ static Logger* _logger = NULL;
 
 void initializeAbstractSyntaxTreeModule() {
     _logger = createLogger("AbstractSyntaxTree");
-    logInformation(_logger, "Abstract Syntax Tree module initialized");
+    logDebugging(_logger, "Abstract Syntax Tree module initialized");
 }
 
 void shutdownAbstractSyntaxTreeModule() {
     if (_logger != NULL) {
-        logInformation(_logger, "Abstract Syntax Tree module shutting down");
+        logDebugging(_logger, "Abstract Syntax Tree module shutting down");
         destroyLogger(_logger);
         _logger = NULL;
     }
@@ -274,12 +274,6 @@ void releaseOpenStatement(OpenStatement* os) {
             releaseForUpdate(os->forStatement.update);
             releaseOpenStatement(os->forStatement.body);
             break;
-        case OPEN_FOREVER:
-            releaseOpenStatement(os->foreverStatement.body);
-            break;
-        case OPEN_STATEMENT_LIST:
-            releaseStatementList(os->statementList.statementList);
-            break;
     }
     SAFE_FREE(os);
 }
@@ -298,17 +292,9 @@ void releaseClosedStatement(ClosedStatement* cs) {
             releaseClosedStatement(cs->ifElseStatement.thenStatement);
             releaseClosedStatement(cs->ifElseStatement.elseStatement);
             break;
-        case CLOSED_IF_BLOCK:
-            releaseCondition(cs->ifBlock.condition);
-            releaseStatementList(cs->ifBlock.body);
-            break;
         case CLOSED_WHILE:
             releaseCondition(cs->whileStatement.condition);
             releaseClosedStatement(cs->whileStatement.body);
-            break;
-        case CLOSED_WHILE_BLOCK:
-            releaseCondition(cs->whileBlock.condition);
-            releaseStatementList(cs->whileBlock.body);
             break;
         case CLOSED_FOR:
             releaseForInitializer(cs->forStatement.initializer);
@@ -316,35 +302,12 @@ void releaseClosedStatement(ClosedStatement* cs) {
             releaseForUpdate(cs->forStatement.update);
             releaseClosedStatement(cs->forStatement.body);
             break;
-        case CLOSED_FOR_BLOCK:
-            releaseForInitializer(cs->forBlock.initializer);
-            releaseCondition(cs->forBlock.condition);
-            releaseForUpdate(cs->forBlock.update);
-            releaseStatementList(cs->forBlock.body);
-            break;
         case CLOSED_FOREVER:
             releaseClosedStatement(cs->foreverStatement.body);
-            break;
-        case CLOSED_FOREVER_BLOCK:
-            releaseStatementList(cs->foreverBlock.body);
-            break;
-        case DOUBLE_CLOSED_IF_ELSE:
-            releaseCondition(cs->doubleClosedIfElse.condition);
-            releaseStatementList(cs->doubleClosedIfElse.thenStatement);
-            releaseStatementList(cs->doubleClosedIfElse.elseStatement);
-            break;
-        case ELSE_CLOSED_IF_ELSE:
-            releaseCondition(cs->elseClosedIfElse.condition);
-            releaseClosedStatement(cs->elseClosedIfElse.thenStatement);
-            releaseStatementList(cs->elseClosedIfElse.elseStatement);
             break;
         case CLOSED_STATEMENT_LIST:
             releaseStatementList(cs->closedStatementList.statementList);
             break;
-        case CLOSED_IF:
-            releaseCondition(cs->ifClosed.condition);
-            releaseClosedStatement(cs->ifClosed.thenStatement);
-        break;
     }
     SAFE_FREE(cs);
 }
@@ -415,17 +378,11 @@ void releaseCondition(Condition* cond) {
         case COND_NOT:
             releaseCondition(cond->not.condition);
             break;
-        case COND_PARENTHESIS:
-            releaseCondition(cond->parenthesis.condition);
-            break;
         case COND_AND: case COND_OR:
             releaseCondition(cond->logical.leftCondition);
             releaseCondition(cond->logical.rightCondition);
             break;
         case COND_EMPTY:
-            break;
-        case COND_CONSTANT:
-            releaseConstant(cond->constant.constant);
             break;
         case COND_EXPRESSION:
             releaseExpression(cond->expression.expression);
@@ -576,15 +533,7 @@ void releaseVariableDeclaration(VariableDeclaration* vd) {
     logDebugging(_logger, "Releasing variable declaration");
     releaseTypeNode(vd->type);
     SAFE_FREE(vd->identifier);
-    
-    switch(vd->uniontype){
-        case CONDITION:
-            releaseCondition(vd->condition);
-            break;
-        case EXPRESSION:
-            releaseExpression(vd->expression);
-            break;
-    }
+    releaseCondition(vd->condition);
     
     SAFE_FREE(vd);
 }
