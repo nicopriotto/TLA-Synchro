@@ -165,16 +165,16 @@ struct Statement {
     union { 
         SimpleStatement* simpleStatement; 
         struct { 
-            Expression* condition; 
+            Condition* condition; 
             Statement* thenStatement; 
         } ifStatement; 
         struct { 
-            Expression* condition; 
+            Condition* condition; 
             Statement* thenStatement; 
             Statement* elseStatement; 
         } ifElseStatement; 
         struct { 
-            Expression* condition; 
+            Condition* condition; 
             Statement* body; 
         } whileStatement; 
         struct { 
@@ -194,16 +194,16 @@ struct Statement {
 struct OpenStatement { 
     union { 
         struct { 
-            Expression* condition; 
+            Condition* condition; 
             Statement* thenStatement; 
         } ifStatement; 
         struct { 
-            Expression* condition; 
+            Condition* condition; 
             Statement* thenStatement; 
             OpenStatement* elseStatement; 
         } ifElseStatement; 
         struct { 
-            Expression* condition; 
+            Condition* condition; 
             OpenStatement* body; 
         } whileStatement; 
         struct { 
@@ -229,20 +229,20 @@ struct ClosedStatement {
     union { 
         SimpleStatement* simpleStatement; 
         struct { 
-            Expression* condition; 
+            Condition* condition; 
             ClosedStatement* thenStatement; 
             ClosedStatement* elseStatement; 
         } ifElseStatement; 
         struct { 
-            Expression* condition; 
+            Condition* condition; 
             StatementList* body; 
         } ifBlock; 
         struct { 
-            Expression* condition; 
+            Condition* condition; 
             ClosedStatement* body; 
         } whileStatement; 
         struct { 
-            Expression* condition; 
+            Condition* condition; 
             StatementList* body; 
         } whileBlock; 
         struct { 
@@ -299,6 +299,12 @@ struct Condition {
             Condition* leftCondition; 
             Condition* rightCondition; 
         } logical; 
+        struct {
+            Constant* constant;
+        } constant;
+        struct {
+            Expression* expression;
+        } expression;
     }; 
     enum { 
         COND_RELATIONAL, 
@@ -306,7 +312,9 @@ struct Condition {
         COND_AND, 
         COND_OR, 
         COND_PARENTHESIS, 
-        COND_EMPTY 
+        COND_EMPTY,
+        COND_CONSTANT,
+        COND_EXPRESSION
     } type; 
 };
 

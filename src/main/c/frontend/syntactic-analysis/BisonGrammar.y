@@ -200,13 +200,11 @@ statement: open_statement                                          { $$ = OpenSt
     | closed_statement                                             { $$ = ClosedStatementSemanticAction($1); }
     ;
 
-open_statement: IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS statement{ $$ = IfOpenStatementSemanticAction($3, $5); }
+open_statement: IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS statement{ $$ = IfOpenStatementSemanticAction($3, $5); }
 
-    | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS statement { $$ = IfOpenStatementSemanticAction($3, $5); }
-
-    | IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS closed_statement ELSE open_statement
+    | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closed_statement ELSE open_statement
                                                                   { $$ = IfElseOpenStatementSemanticAction($3, ClosedStatementSemanticAction($5), $7); }
-    | WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS open_statement
+    | WHILE LEFT_PARENTHESIS condition RIGHT_PARENTHESIS open_statement
                                                                   { $$ = WhileOpenStatementSemanticAction($3, $5); }
     | FOR LEFT_PARENTHESIS for_initializer SEMICOLON condition_optional SEMICOLON for_update RIGHT_PARENTHESIS open_statement
                                                                   { $$ = ForOpenStatementSemanticAction($3, $5, $7, $9); }
@@ -214,13 +212,13 @@ open_statement: IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS statement{ $$ =
     ;
 
 closed_statement: simple_statement SEMICOLON                       { $$ = SimpleClosedStatementSemanticAction($1); }
-    | IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS closed_statement ELSE closed_statement
+    | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closed_statement ELSE closed_statement
                                                                   { $$ = IfElseClosedStatementSemanticAction($3, $5, $7); }
-    | IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE
+    | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE
                                                                   { $$ = IfBlockClosedStatementSemanticAction($3, $6); }
-    | WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS closed_statement
+    | WHILE LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closed_statement
                                                                   { $$ = WhileClosedStatementSemanticAction($3, $5); }
-    | WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE
+    | WHILE LEFT_PARENTHESIS condition RIGHT_PARENTHESIS LEFT_BRACE statement_list RIGHT_BRACE
                                                                   { $$ = WhileBlockClosedStatementSemanticAction($3, $6); }
     | FOR LEFT_PARENTHESIS for_initializer SEMICOLON condition_optional SEMICOLON for_update RIGHT_PARENTHESIS closed_statement
                                                                   { $$ = ForClosedStatementSemanticAction($3, $5, $7, $9); }
@@ -241,8 +239,8 @@ simple_statement: function_identifier LEFT_PARENTHESIS argument_list RIGHT_PAREN
     ;
 
 variable_declaration
-: type IDENTIFIER ASSIGN condition                                 { $$ = VariableDeclarationSemanticActionCondition($1, $2, $4); }
-| type IDENTIFIER ASSIGN expression                                { $$ = VariableDeclarationSemanticActionExpression($1, $2, $4); }
+    : type IDENTIFIER ASSIGN condition                                 { $$ = VariableDeclarationSemanticActionCondition($1, $2, $4); }
+/* | type IDENTIFIER ASSIGN expression                                { $$ = VariableDeclarationSemanticActionExpression($1, $2, $4); } */
     ;
 
 for_initializer: for_initializer_not_empty                         { $$ = $1; }
@@ -286,7 +284,9 @@ condition: expression relational_operator expression               { $$ = Relati
     | NOT condition                                                { $$ = NotConditionSemanticAction($2); }
     | condition AND condition                                      { $$ = LogicalConditionSemanticAction($1, $3, COND_AND); }
     | condition OR condition                                       { $$ = LogicalConditionSemanticAction($1, $3, COND_OR); }
-    | LEFT_PARENTHESIS condition RIGHT_PARENTHESIS                 { $$ = ParenthesisConditionSemanticAction($2); }
+    /* | LEFT_PARENTHESIS condition RIGHT_PARENTHESIS                 { $$ = ParenthesisConditionSemanticAction($2); } */
+    /* | constant                                                     { $$ = ConstantConditionSemanticAction($1); } */
+    | expression                                                   { $$ = ExpressionAsConditionSemanticAction($1); }
     ;
 
 relational_operator: EQUALS                                        { $$ = RelationalOperatorSemanticAction(REL_EQUALS); }
@@ -308,7 +308,7 @@ expression: expression ADD expression                              { $$ = Binary
     | DECREMENT IDENTIFIER                                         { $$ = UnaryExpressionSemanticAction(IdentifierExpressionSemanticAction($2), EXPR_PRE_DECREMENT); }
     | LEFT_PARENTHESIS expression RIGHT_PARENTHESIS                { $$ = $2; }
     | IDENTIFIER LEFT_PARENTHESIS argument_list RIGHT_PARENTHESIS  { $$ = FunctionCallExpressionSemanticAction($1, $3); }
-    | constant                                                     { $$ = ConstantExpressionSemanticAction($1); }
+    | constant                                                     { $$ = ConstantExpressionSemanticAction($1); } 
     | IDENTIFIER                                                   { $$ = IdentifierExpressionSemanticAction($1); }
     ;
 

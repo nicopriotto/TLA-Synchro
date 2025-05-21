@@ -78,6 +78,16 @@ Expression* ConstantExpressionSemanticAction(Constant* constant) {
     return expression;
 }
 
+Condition* ConstantConditionSemanticAction(Constant* constant) {
+    _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    Condition* condition = calloc(1, sizeof(Condition));
+    condition->constant.constant = constant;
+    condition->type = COND_CONSTANT;
+    
+    return condition;
+}
+
 Expression* IdentifierExpressionSemanticAction(char* identifier) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
@@ -172,6 +182,17 @@ Condition* EmptyConditionSemanticAction() {
     
     return condition;
 }
+
+Condition* ExpressionAsConditionSemanticAction(Expression* expression){
+    _logSyntacticAnalyzerAction(__FUNCTION__);
+
+    Condition* condition = calloc(1, sizeof(Condition));
+    condition->expression.expression = expression;
+    condition->type = COND_EXPRESSION;
+    
+    return condition;
+}
+
 
 /* PUBLIC FUNCTIONS - Relational Operator */
 
@@ -353,7 +374,7 @@ SimpleStatement* DeclarationSimpleStatementSemanticAction(VariableDeclaration* d
 }
 
 /* PUBLIC FUNCTIONS - Open Statements */
-OpenStatement* IfOpenStatementSemanticAction(Expression* condition, Statement* thenStatement) {
+OpenStatement* IfOpenStatementSemanticAction(Condition* condition, Statement* thenStatement) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     OpenStatement* openStatement = calloc(1, sizeof(OpenStatement));
@@ -364,7 +385,7 @@ OpenStatement* IfOpenStatementSemanticAction(Expression* condition, Statement* t
     return openStatement;
 }
 
-OpenStatement* IfElseOpenStatementSemanticAction(Expression* condition, Statement* thenStatement, OpenStatement* elseStatement) {
+OpenStatement* IfElseOpenStatementSemanticAction(Condition* condition, Statement* thenStatement, OpenStatement* elseStatement) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     OpenStatement* openStatement = calloc(1, sizeof(OpenStatement));
@@ -376,7 +397,7 @@ OpenStatement* IfElseOpenStatementSemanticAction(Expression* condition, Statemen
     return openStatement;
 }
 
-OpenStatement* WhileOpenStatementSemanticAction(Expression* condition, OpenStatement* body) {
+OpenStatement* WhileOpenStatementSemanticAction(Condition* condition, OpenStatement* body) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     OpenStatement* openStatement = calloc(1, sizeof(OpenStatement));
@@ -421,7 +442,7 @@ ClosedStatement* SimpleClosedStatementSemanticAction(SimpleStatement* simpleStat
     return closedStatement;
 }
 
-ClosedStatement* IfElseClosedStatementSemanticAction(Expression* condition, ClosedStatement* thenStatement, ClosedStatement* elseStatement) {
+ClosedStatement* IfElseClosedStatementSemanticAction(Condition* condition, ClosedStatement* thenStatement, ClosedStatement* elseStatement) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     ClosedStatement* closedStatement = calloc(1, sizeof(ClosedStatement));
@@ -433,7 +454,7 @@ ClosedStatement* IfElseClosedStatementSemanticAction(Expression* condition, Clos
     return closedStatement;
 }
 
-ClosedStatement* IfBlockClosedStatementSemanticAction(Expression* condition, StatementList* body) {
+ClosedStatement* IfBlockClosedStatementSemanticAction(Condition* condition, StatementList* body) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     ClosedStatement* closedStatement = calloc(1, sizeof(ClosedStatement));
@@ -444,7 +465,7 @@ ClosedStatement* IfBlockClosedStatementSemanticAction(Expression* condition, Sta
     return closedStatement;
 }
 
-ClosedStatement* WhileClosedStatementSemanticAction(Expression* condition, ClosedStatement* body) {
+ClosedStatement* WhileClosedStatementSemanticAction(Condition* condition, ClosedStatement* body) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     ClosedStatement* closedStatement = calloc(1, sizeof(ClosedStatement));
@@ -455,7 +476,7 @@ ClosedStatement* WhileClosedStatementSemanticAction(Expression* condition, Close
     return closedStatement;
 }
 
-ClosedStatement* WhileBlockClosedStatementSemanticAction(Expression* condition, StatementList* body) {
+ClosedStatement* WhileBlockClosedStatementSemanticAction(Condition* condition, StatementList* body) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     ClosedStatement* closedStatement = calloc(1, sizeof(ClosedStatement));

@@ -251,16 +251,16 @@ void releaseOpenStatement(OpenStatement* os) {
     
     switch (os->type) {
         case OPEN_IF:
-            releaseExpression(os->ifStatement.condition);
+            releaseCondition(os->ifStatement.condition);
             releaseStatement(os->ifStatement.thenStatement);
             break;
         case OPEN_IF_ELSE:
-            releaseExpression(os->ifElseStatement.condition);
+            releaseCondition(os->ifElseStatement.condition);
             releaseStatement(os->ifElseStatement.thenStatement);
             releaseOpenStatement(os->ifElseStatement.elseStatement);
             break;
         case OPEN_WHILE:
-            releaseExpression(os->whileStatement.condition);
+            releaseCondition(os->whileStatement.condition);
             releaseOpenStatement(os->whileStatement.body);
             break;
         case OPEN_FOR:
@@ -286,20 +286,20 @@ void releaseClosedStatement(ClosedStatement* cs) {
             releaseSimpleStatement(cs->simpleStatement);
             break;
         case CLOSED_IF_ELSE:
-            releaseExpression(cs->ifElseStatement.condition);
+            releaseCondition(cs->ifElseStatement.condition);
             releaseClosedStatement(cs->ifElseStatement.thenStatement);
             releaseClosedStatement(cs->ifElseStatement.elseStatement);
             break;
         case CLOSED_IF_BLOCK:
-            releaseExpression(cs->ifBlock.condition);
+            releaseCondition(cs->ifBlock.condition);
             releaseStatementList(cs->ifBlock.body);
             break;
         case CLOSED_WHILE:
-            releaseExpression(cs->whileStatement.condition);
+            releaseCondition(cs->whileStatement.condition);
             releaseClosedStatement(cs->whileStatement.body);
             break;
         case CLOSED_WHILE_BLOCK:
-            releaseExpression(cs->whileBlock.condition);
+            releaseCondition(cs->whileBlock.condition);
             releaseStatementList(cs->whileBlock.body);
             break;
         case CLOSED_FOR:
@@ -334,16 +334,16 @@ void releaseStatement(Statement* stmt) {
             releaseSimpleStatement(stmt->simpleStatement);
             break;
         case STMT_IF:
-            releaseExpression(stmt->ifStatement.condition);
+            releaseCondition(stmt->ifStatement.condition);
             releaseStatement(stmt->ifStatement.thenStatement);
             break;
         case STMT_IF_ELSE:
-            releaseExpression(stmt->ifElseStatement.condition);
+            releaseCondition(stmt->ifElseStatement.condition);
             releaseStatement(stmt->ifElseStatement.thenStatement);
             releaseStatement(stmt->ifElseStatement.elseStatement);
             break;
         case STMT_WHILE:
-            releaseExpression(stmt->whileStatement.condition);
+            releaseCondition(stmt->whileStatement.condition);
             releaseStatement(stmt->whileStatement.body);
             break;
         case STMT_FOR:
@@ -397,6 +397,12 @@ void releaseCondition(Condition* cond) {
             releaseCondition(cond->logical.rightCondition);
             break;
         case COND_EMPTY:
+            break;
+        case COND_CONSTANT:
+            releaseConstant(cond->constant.constant);
+            break;
+        case COND_EXPRESSION:
+            releaseExpression(cond->expression.expression);
             break;
     }
     SAFE_FREE(cond);
