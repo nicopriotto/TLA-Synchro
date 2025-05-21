@@ -373,6 +373,26 @@ SimpleStatement* DeclarationSimpleStatementSemanticAction(VariableDeclaration* d
     return simpleStatement;
 }
 
+SimpleStatement* ReturnConstantSimpleStatementSemanticAction(Constant* constant) {
+    _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    SimpleStatement* simpleStatement = calloc(1, sizeof(SimpleStatement));
+    simpleStatement->constant = constant;
+    simpleStatement->type = RETURN_CONSTANT;
+    
+    return simpleStatement;
+}
+
+SimpleStatement* ReturnIdentifierSimpleStatementSemanticAction(char* identifier) {
+    _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    SimpleStatement* simpleStatement = calloc(1, sizeof(SimpleStatement));
+    simpleStatement->identifier = identifier;
+    simpleStatement->type = RETURN_IDENTIFIER;
+    
+    return simpleStatement;
+}
+
 /* PUBLIC FUNCTIONS - Open Statements */
 OpenStatement* IfOpenStatementSemanticAction(Condition* condition, Statement* thenStatement) {
     _logSyntacticAnalyzerAction(__FUNCTION__);

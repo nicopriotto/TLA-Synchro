@@ -240,6 +240,12 @@ void releaseSimpleStatement(SimpleStatement* ss) {
         case SIMPLE_DECLARATION:
             releaseVariableDeclaration(ss->declaration);
             break;
+        case RETURN_CONSTANT:
+            releaseConstant(ss->constant);
+            break;
+        case RETURN_IDENTIFIER:
+            SAFE_FREE(ss->identifier);
+            break;
     }
     SAFE_FREE(ss);
 }
@@ -466,7 +472,6 @@ void releaseDeclarationList(DeclarationList* dl) {
     while (current) {
         next = current->next;
         releaseTypeNode(current->type);
-        logDebugging(_logger, "THIS IS THE IDENTIFIER!! %s", current->identifier != NULL ? current->identifier : "NULL");
         SAFE_FREE(current->identifier);
         releaseDeclarationTail(current->declarationTail);
         SAFE_FREE(current);

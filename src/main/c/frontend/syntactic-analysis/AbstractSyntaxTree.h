@@ -86,8 +86,7 @@ enum TypeNodeType {
 
 enum FunctionIdentifierType { 
     FUNC_PRINT, 
-    FUNC_SLEEP, 
-    FUNC_RETURN, 
+    FUNC_SLEEP,  
     FUNC_UP, 
     FUNC_DOWN, 
     FUNC_THREAD, 
@@ -151,13 +150,17 @@ struct SimpleStatement {
             Expression* expression; 
         } assignment; 
         VariableDeclaration* declaration; 
+        Constant* constant;
+        char* identifier;
     }; 
     enum { 
         SIMPLE_FUNCTION_CALL, 
         SIMPLE_INCREMENT, 
         SIMPLE_DECREMENT, 
         SIMPLE_ASSIGNMENT, 
-        SIMPLE_DECLARATION 
+        SIMPLE_DECLARATION,
+        RETURN_CONSTANT,
+        RETURN_IDENTIFIER
     } type; 
 };
 

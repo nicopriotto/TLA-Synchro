@@ -19,4 +19,5 @@ int B() {
 int main() {
     thread(A, 2);   
     thread(B, 5);
+    return status;
 }

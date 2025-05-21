@@ -67,6 +67,8 @@ SimpleStatement* IncrementSimpleStatementSemanticAction(char* identifier, boolea
 SimpleStatement* DecrementSimpleStatementSemanticAction(char* identifier, boolean isPrefix);
 SimpleStatement* AssignmentSimpleStatementSemanticAction(char* identifier, Expression* expression);
 SimpleStatement* DeclarationSimpleStatementSemanticAction(VariableDeclaration* declaration);
+SimpleStatement* ReturnConstantSimpleStatementSemanticAction(Constant* constant);
+SimpleStatement* ReturnIdentifierSimpleStatementSemanticAction(char* identifier);
 
 /** Open statements (`if`, `while`, `for`, `forever`) */
 OpenStatement* IfOpenStatementSemanticAction(Condition* condition, Statement* thenStatement);
