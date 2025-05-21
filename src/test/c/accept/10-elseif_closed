@@ -1,7 +1,7 @@
 int main() {
-  if ( 1 )
+  if ( 1 ) {
     int a = 1;
-  else {
+  } else {
     int b = 3;
     int a = 5;
   }

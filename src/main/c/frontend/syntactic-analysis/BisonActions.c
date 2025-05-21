@@ -451,6 +451,16 @@ OpenStatement* ForeverOpenStatementSemanticAction(OpenStatement* body) {
     return openStatement;
 }
 
+OpenStatement* OpenListStatmentSemanticAction(StatementList* statmenentList) {
+    _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    OpenStatement* openStatement = calloc(1, sizeof(OpenStatement));
+    openStatement->statementList.statementList = statmenentList;
+    openStatement->type = OPEN_STATEMENT_LIST;
+    
+    return openStatement;
+}
+
 /* PUBLIC FUNCTIONS - Closed Statements */
 ClosedStatement* SimpleClosedStatementSemanticAction(SimpleStatement* simpleStatement) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
@@ -462,12 +472,23 @@ ClosedStatement* SimpleClosedStatementSemanticAction(SimpleStatement* simpleStat
     return closedStatement;
 }
 
-ClosedStatement* ClosedStatementListSemanticAction(StatementList* statementList){
+ClosedStatement* ClosedListStatementSemanticAction(StatementList* statementList){
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     ClosedStatement* closedStatement = calloc(1, sizeof(ClosedStatement));
-    closedStatement->statementList.statementList = statementList;
-    closedStatement->type = STATEMENT_LIST;
+    closedStatement->closedStatementList.statementList = statementList;
+    closedStatement->type = CLOSED_STATEMENT_LIST;
+    
+    return closedStatement;
+}
+
+ClosedStatement* IfClosedStatementSemanticAction(Condition* condition, ClosedStatement* thenStatement){
+    _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    ClosedStatement* closedStatement = calloc(1, sizeof(ClosedStatement));
+    closedStatement->ifClosed.condition = condition;
+    closedStatement->ifClosed.thenStatement = thenStatement;
+    closedStatement->type = CLOSED_IF;
     
     return closedStatement;
 }
@@ -690,6 +711,16 @@ Statement* ClosedStatementSemanticAction(ClosedStatement* closedStatement) {
             statement->foreverStatement.body = calloc(1, sizeof(Statement));
             statement->foreverStatement.body->type = STMT_BLOCK; 
             statement->foreverStatement.body->blockStatement = closedStatement->foreverBlock.body;
+            break;
+        case DOUBLE_CLOSED_IF_ELSE:
+            break;
+        case ELSE_CLOSED_IF_ELSE:
+            break;
+        case CLOSED_STATEMENT_LIST:
+            statement->type = STMT_BLOCK;
+            statement->blockStatement = closedStatement->closedStatementList.statementList;
+            break;
+        case CLOSED_IF:
             break;
     }
     

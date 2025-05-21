@@ -277,6 +277,9 @@ void releaseOpenStatement(OpenStatement* os) {
         case OPEN_FOREVER:
             releaseOpenStatement(os->foreverStatement.body);
             break;
+        case OPEN_STATEMENT_LIST:
+            releaseStatementList(os->statementList.statementList);
+            break;
     }
     SAFE_FREE(os);
 }
@@ -335,9 +338,13 @@ void releaseClosedStatement(ClosedStatement* cs) {
             releaseClosedStatement(cs->elseClosedIfElse.thenStatement);
             releaseStatementList(cs->elseClosedIfElse.elseStatement);
             break;
-        case STATEMENT_LIST:
-            releaseStatementList(cs->statementList.statementList);
+        case CLOSED_STATEMENT_LIST:
+            releaseStatementList(cs->closedStatementList.statementList);
             break;
+        case CLOSED_IF:
+            releaseCondition(cs->ifClosed.condition);
+            releaseClosedStatement(cs->ifClosed.thenStatement);
+        break;
     }
     SAFE_FREE(cs);
 }
@@ -383,11 +390,9 @@ void releaseStatement(Statement* stmt) {
 void releaseStatementList(StatementList* sl) {
     if (!sl) return;
     
-    // Use an iterative approach to avoid stack overflow for large lists
     StatementList* current = sl;
     StatementList* next = NULL;
 
-    int i = 0;
     while (current) {
         next = current->next;
         releaseStatement(current->statement);

@@ -219,13 +219,17 @@ struct OpenStatement {
         struct { 
             OpenStatement* body; 
         } foreverStatement; 
+        struct {
+            StatementList* statementList;
+        } statementList;
     }; 
     enum { 
         OPEN_IF, 
         OPEN_IF_ELSE, 
         OPEN_WHILE, 
         OPEN_FOR, 
-        OPEN_FOREVER 
+        OPEN_FOREVER,
+        OPEN_STATEMENT_LIST
     } type; 
 };
 
@@ -279,7 +283,11 @@ struct ClosedStatement {
         } doubleClosedIfElse;
         struct {
             StatementList* statementList;
-        } statementList;
+        } closedStatementList;
+        struct {
+            Condition* condition;
+            ClosedStatement* thenStatement;
+        } ifClosed;
     }; 
     enum { 
         CLOSED_SIMPLE, 
@@ -293,7 +301,8 @@ struct ClosedStatement {
         CLOSED_FOREVER_BLOCK,
         DOUBLE_CLOSED_IF_ELSE,
         ELSE_CLOSED_IF_ELSE,
-        STATEMENT_LIST
+        CLOSED_STATEMENT_LIST,
+        CLOSED_IF
     } type; 
 };
 

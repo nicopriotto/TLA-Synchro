@@ -64,7 +64,6 @@
 %destructor { releaseVariableDeclaration($$); } <variableDeclaration>
 %destructor { releaseRelationalOperator($$); } <relationalOperator>
 
-
 /** Terminals. */
 
 %token <token> SUB
@@ -203,55 +202,25 @@ statement
     ;
 
 openStatement
-    : IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS statement /*HI*/                                                                                    { $$ = IfOpenStatementSemanticAction($3, $5); } 
+    : IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS statement                                                                                     { $$ = IfOpenStatementSemanticAction($3, $5); } 
     | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closedStatement ELSE openStatement                                                            { $$ = IfElseOpenStatementSemanticAction($3, ClosedStatementSemanticAction($5), $7); }
+    /* | LEFT_BRACE statementList RIGHT_BRACE                                                                                                          { $$ = OpenListStatmentSemanticAction($2);} */
     | WHILE LEFT_PARENTHESIS condition RIGHT_PARENTHESIS openStatement                                                                              { $$ = WhileOpenStatementSemanticAction($3, $5); }
     | FOR LEFT_PARENTHESIS forInitializer SEMICOLON conditionOptional SEMICOLON forUpdate RIGHT_PARENTHESIS openStatement                           { $$ = ForOpenStatementSemanticAction($3, $5, $7, $9); }
-    | FOREVER openStatement                                                                                                                         { $$ = ForeverOpenStatementSemanticAction($2); }
+    /* | FOREVER openStatement                                                                                                                         { $$ = ForeverOpenStatementSemanticAction($2); } */
     ;
-
-/*
-open: if () statement;
-open: if () closed else open;  -> if () statement else statement y abarcas todas las combinaciones de open close
-closed: if () closed else closed;
-closed: if () closed else { list };
-closed: if () { list };
-closed: if () { list } else { list };
-
-
-if () openStatement;
-if () openStatement else openStatement;
-if () { closedStatement };
-if () { closedStatement } else { closedStatement };
-
-
-
-
-SHIFT/REDUCE
-if()
-if() {
-
-} else {
-
-}
-
-estatement -> openStatement -> if() statement -> if() closedStatement -> if() if() { statementList } else { statementList }
-
-*/
 
 closedStatement
     : simpleStatement SEMICOLON                                                                                                                     { $$ = SimpleClosedStatementSemanticAction($1); }
-    /* | LEFT_BRACE statementList RIGHT_BRACE  { $$ = ClosedStatementListSemanticAction($2); } */
+    /* | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closedStatement                                                                               { $$ = IfClosedStatementSemanticAction($3, $5); }  */
     | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closedStatement ELSE closedStatement                                                          { $$ = IfElseClosedStatementSemanticAction($3, $5, $7); }
-    | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closedStatement ELSE LEFT_BRACE statementList RIGHT_BRACE                                     { $$ = IfElseBracesClosedStatementSemanticAction($3, $5, $8); }
-    | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE                                                          { $$ = IfBlockClosedStatementSemanticAction($3, $6); }
-    /* | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE ELSE LEFT_BRACE statementList RIGHT_BRACE                { $$ = IfElseBlockClosedStatementSemanticAction($3, $6, $10); } */
+    | LEFT_BRACE statementList RIGHT_BRACE                                                                                                    { $$ = ClosedListStatementSemanticAction($2);}
     | WHILE LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closedStatement                                                                            { $$ = WhileClosedStatementSemanticAction($3, $5); }
-    | WHILE LEFT_PARENTHESIS condition RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE                                                       { $$ = WhileBlockClosedStatementSemanticAction($3, $6); }
+  /*  | WHILE LEFT_PARENTHESIS condition RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE                                                       { $$ = WhileBlockClosedStatementSemanticAction($3, $6); }*/
     | FOR LEFT_PARENTHESIS forInitializer SEMICOLON conditionOptional SEMICOLON forUpdate RIGHT_PARENTHESIS closedStatement                         { $$ = ForClosedStatementSemanticAction($3, $5, $7, $9); }
-    | FOR LEFT_PARENTHESIS forInitializer SEMICOLON conditionOptional SEMICOLON forUpdate RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE    { $$ = ForBlockClosedStatementSemanticAction($3, $5, $7, $10); }
+  /*  | FOR LEFT_PARENTHESIS forInitializer SEMICOLON conditionOptional SEMICOLON forUpdate RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE    { $$ = ForBlockClosedStatementSemanticAction($3, $5, $7, $10); } */
     | FOREVER closedStatement                                                                                                                       { $$ = ForeverClosedStatementSemanticAction($2); }
-    | FOREVER LEFT_BRACE statementList RIGHT_BRACE                                                                                                  { $$ = ForeverBlockClosedStatementSemanticAction($3); }
+ /*   | FOREVER LEFT_BRACE statementList RIGHT_BRACE                                                                                                  { $$ = ForeverBlockClosedStatementSemanticAction($3); } */
     ;
 
 simpleStatement

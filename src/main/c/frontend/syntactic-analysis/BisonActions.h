@@ -79,7 +79,8 @@ OpenStatement* ForeverOpenStatementSemanticAction(OpenStatement* body);
 
 /** Closed statements (terminated by newline or explicit block) */
 ClosedStatement* SimpleClosedStatementSemanticAction(SimpleStatement* simple);
-ClosedStatement* ClosedStatementListSemanticAction(StatementList* statementList);
+ClosedStatement* ClosedListStatementSemanticAction(StatementList* statementList);
+ClosedStatement* IfClosedStatementSemanticAction(Condition* condition, ClosedStatement* thenStmt);
 ClosedStatement* IfElseClosedStatementSemanticAction(Condition* condition, ClosedStatement* thenStmt, ClosedStatement* elseStmt);
 ClosedStatement* IfElseBracesClosedStatementSemanticAction(Condition* condition, ClosedStatement* thenStmt, StatementList* elseStmt);
 ClosedStatement* IfBlockClosedStatementSemanticAction(Condition* condition, StatementList* body);
