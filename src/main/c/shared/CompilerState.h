@@ -2,6 +2,7 @@
 #define COMPILER_STATE_HEADER
 
 #include "Type.h"
+#include "semantic-analysis/SymbolTable.h"
 
 /**
  * The general status of a compilation.

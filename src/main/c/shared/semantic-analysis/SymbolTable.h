@@ -4,12 +4,12 @@
 #include <stddef.h>
 
 typedef enum {
-    INTEGER,
-    STRING,
-    FLOAT,
-    BOOLEAN,
-    SEMAPHORE,
-    FUNCTION
+    SYMBOL_INTEGER,
+    SYMBOL_STRING,
+    SYMBOL_FLOAT,
+    SYMBOL_BOOLEAN,
+    SYMBOL_SEMAPHORE,
+    SYMBOL_FUNCTION
 } SymbolType;
 
 typedef struct SymbolEntry {

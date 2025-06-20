@@ -36,25 +36,25 @@ SymbolEntry *findSymbol(const SymbolTable *table, const char *id, int scopeWante
 boolean updateSymbolValue(SymbolTable *table, const char *id, int scope, const void *data) {
     SymbolEntry *e = findSymbol(table, id, scope);
     if (!e) return false;
-    if (e->type == STRING) {
+    if (e->type == SYMBOL_STRING) {
         free(e->data.stringValue);
         e->data.stringValue = NULL;
     }
     switch (e->type) {
-        case INTEGER:
+        case SYMBOL_INTEGER:
             e->data.integerValue = *(const int*)data; 
             break;
-        case STRING: 
+        case SYMBOL_STRING: 
             e->data.stringValue = strdup((const char*)data); 
             if (!e->data.stringValue) return false; 
             break;
-        case FLOAT: 
+        case SYMBOL_FLOAT: 
             e->data.floatValue = *(const float*)data; 
             break;
-        case BOOLEAN: 
+        case SYMBOL_BOOLEAN: 
             e->data.booleanValue = *(const boolean*)data; 
             break;
-        case SEMAPHORE: 
+        case SYMBOL_SEMAPHORE: 
             e->data.semaphoreValue = *(const int*)data; 
             break;
         case FUNCTION: 
@@ -130,11 +130,11 @@ static SymbolEntry *newEntry(const char *id, SymbolType t, int scope, const void
     e->scope = scope;
     e->next = NULL;
     switch (t) {
-        case INTEGER: e->data.integerValue = *(const int*)data; break;
-        case STRING: e->data.stringValue = strdup((const char*)data); if (!e->data.stringValue) { freeEntry(e); return NULL; } break;
-        case FLOAT: e->data.floatValue = *(const float*)data; break;
-        case BOOLEAN: e->data.booleanValue = *(const boolean*)data; break;
-        case SEMAPHORE: e->data.semaphoreValue = *(const int*)data; break;
+        case SYMBOL_INTEGER: e->data.integerValue = *(const int*)data; break;
+        case SYMBOL_STRING: e->data.stringValue = strdup((const char*)data); if (!e->data.stringValue) { freeEntry(e); return NULL; } break;
+        case SYMBOL_FLOAT: e->data.floatValue = *(const float*)data; break;
+        case SYMBOL_BOOLEAN: e->data.booleanValue = *(const boolean*)data; break;
+        case SYMBOL_SEMAPHORE: e->data.semaphoreValue = *(const int*)data; break;
         case FUNCTION: e->data.functionType = *(const SymbolType*)data; break;
     }
     return e;
@@ -143,6 +143,6 @@ static SymbolEntry *newEntry(const char *id, SymbolType t, int scope, const void
 static void freeEntry(SymbolEntry *e) {
     if (!e) return;
     free(e->identifier);
-    if (e->type == STRING) free(e->data.stringValue);
+    if (e->type == SYMBOL_STRING) free(e->data.stringValue);
     free(e);
 }
