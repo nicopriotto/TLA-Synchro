@@ -32,23 +32,23 @@ static SymbolEntry *lookupSymbol(const char *id)
 static int variableExists(const char *id)
 {
     SymbolEntry *e = lookupSymbol(id);
-    return e && e->type != FUNCTION;
+    return e && e->type != SYMBOL_FUNCTION;
 }
 
 static int functionExists(const char *id)
 {
     SymbolEntry *e = lookupSymbol(id);
-    return e && e->type == FUNCTION;
+    return e && e->type == SYMBOL_FUNCTION;
 }
 
 static TypeNodeType mapSymbolType(SymbolType t)
 {
     switch (t) {
-        case INTEGER:   return TYPE_INTEGER;
-        case STRING:    return TYPE_STRING;
-        case FLOAT:     return TYPE_FLOAT;
-        case BOOLEAN:   return TYPE_BOOLEAN;
-        case SEMAPHORE: return TYPE_SEM;
+        case SYMBOL_INTEGER:   return TYPE_INTEGER;
+        case SYMBOL_STRING:    return TYPE_STRING;
+        case SYMBOL_FLOAT:     return TYPE_FLOAT;
+        case SYMBOL_BOOLEAN:   return TYPE_BOOLEAN;
+        case SYMBOL_SEMAPHORE: return TYPE_SEM;
         default:        return (TypeNodeType)-1;
     }
 }
@@ -101,7 +101,7 @@ static TypeNodeType inferExpressionType(Expression *e)
             if (!se) {
                 return TYPE_INTEGER;
             }
-            if (se->type != FUNCTION) return (TypeNodeType)-1;
+            if (se->type != SYMBOL_FUNCTION) return (TypeNodeType)-1;
             return mapSymbolType(se->data.functionType);
         }
     }
@@ -196,7 +196,7 @@ unsigned int CheckTypeSimpleStatement(SimpleStatement *s)
 
         case SIMPLE_ASSIGNMENT: {
             SymbolEntry *se = lookupSymbol(s->assignment.identifier);
-            if (!se || se->type == FUNCTION) return 0;
+            if (!se || se->type == SYMBOL_FUNCTION) return 0;
             TypeNodeType lhs = mapSymbolType(se->type);
             TypeNodeType rhs = inferExpressionType(s->assignment.expression);
             return typesCompatible(lhs, rhs);
