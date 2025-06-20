@@ -48,10 +48,15 @@ CompilerState * currentCompilerState() {
 
 SyntacticAnalysisStatus parse(CompilerState * compilerState) {
 	logDebugging(_logger, "Parsing...");
+	logDebugging(_logger, "\nPARSER STATE 0\n");
 	_currentCompilerState = compilerState;
+	logDebugging(_logger, "\nPARSER STATE 1\n");
 	const int code = yyparse();
+	logDebugging(_logger, "\nPARSER STATE 2\n");
 	_currentCompilerState = NULL;
+	logDebugging(_logger, "\nPARSER STATE 3\n");
 	SyntacticAnalysisStatus syntacticAnalysisStatus;
+	logDebugging(_logger, "\nPARSER STATE 4\n");
 	logDebugging(_logger, "Parsing is done.");
 	
 	switch (code) {

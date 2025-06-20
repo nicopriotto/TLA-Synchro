@@ -9,7 +9,7 @@ typedef struct {
     int nextScopeId;
 } ScopeStack;
 
-void initScopeStack(ScopeStack *stack);
+ScopeStack initScopeStack();
 void pushScope(ScopeStack *stack);
 void popScope(ScopeStack *stack, SymbolTable *st);
 int currentScope(const ScopeStack *stack);

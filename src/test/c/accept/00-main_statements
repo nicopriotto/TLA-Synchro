@@ -1,6 +1,6 @@
 int main() {
-    int a = 2;
-    if(1) {
-        float c = 2.9;
+    int ab = 2;
+    if(1 > 0) {
+        float cs = 2.9;
     }
 }

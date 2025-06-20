@@ -4,6 +4,9 @@
 #include "../../shared/CompilerState.h"
 #include "../../shared/Logger.h"
 #include "../../shared/Type.h"
+#include "../../shared/semantic-analysis/TypeChecking.h"
+#include "../../shared/semantic-analysis/SymbolTable.h"
+#include "../../shared/semantic-analysis/ScopeStack.h"
 #include "AbstractSyntaxTree.h"
 #include "SyntacticAnalyzer.h"
 #include <stdlib.h>

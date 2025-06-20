@@ -5,6 +5,12 @@
 #include "SymbolTable.h"
 #include "../../frontend/syntactic-analysis/SyntacticAnalyzer.h"
 
+#include "../Logger.h"
+#include "../CompilerState.h"
+
+void initializeTypeCheckingModule();
+void shutdownTypeCheckingModule();
+
 unsigned int CheckTypeProgram(Program *program);
 unsigned int CheckTypeStatement(Statement *statement);
 unsigned int CheckTypeStatementList(StatementList *statementList);

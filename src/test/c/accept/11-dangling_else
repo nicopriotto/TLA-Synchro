@@ -1,7 +1,9 @@
 int main() {
+    int a = 10;
+    int b = 5;
     if (a == 10)
         if (b == 10)
-            printf("Both are 10\n");
+            print("Both are 10\n");
         else
-            printf("Only a is 10\n");
+            print("Only a is 10\n");
 }

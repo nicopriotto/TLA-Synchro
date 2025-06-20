@@ -15,7 +15,8 @@ static void ensureCapacity(ScopeStack *stk) {
     }
 }
 
-void initScopeStack(ScopeStack *stk) {
+ScopeStack initScopeStack() {
+    ScopeStack* stk = calloc(sizeof(ScopeStack), 1);
     stk->levels = malloc(sizeof(int) * INITIAL_CAP);
     if (!stk->levels) {
         fprintf(stderr, "OOM\n");
@@ -24,6 +25,7 @@ void initScopeStack(ScopeStack *stk) {
     stk->size = 0;
     stk->capacity = INITIAL_CAP;
     stk->nextScopeId = 1;
+    return *stk;
 }
 
 void pushScope(ScopeStack *stk) {

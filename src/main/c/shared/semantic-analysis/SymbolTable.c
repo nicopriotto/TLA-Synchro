@@ -6,9 +6,33 @@
 static SymbolEntry *newEntry(const char *id, SymbolType t, int scope, const void *data);
 static void freeEntry(SymbolEntry *e);
 
-void initSymbolTable(SymbolTable *table) {
+static Logger* _logger = NULL;
+
+void initializeSymbolTableModule() {
+    _logger = createLogger("SymbolTable");
+}
+
+void shutdownSymbolTableModule() {
+    if (_logger != NULL) {
+        destroyLogger(_logger);
+    }
+}
+
+void initSymbolTable(SymbolTable* table) {
     table->head = NULL;
 }
+
+SymbolTable initializeSymbolTable() {
+    SymbolTable* table = calloc(sizeof(SymbolTable), 1);
+    table->head = NULL;
+    insertSymbol(table, "print", SYMBOL_FUNCTION, -1, NULL);
+    insertSymbol(table, "sleep", SYMBOL_FUNCTION, -1, NULL);
+    insertSymbol(table, "up", SYMBOL_FUNCTION, -1, NULL);
+    insertSymbol(table, "down", SYMBOL_FUNCTION, -1, NULL);
+    insertSymbol(table, "thread", SYMBOL_FUNCTION, -1, NULL);
+    return *table;
+}
+
 
 boolean insertSymbol(SymbolTable *table, const char *id, SymbolType t, int scope, const void *data) {
     if (!table || !id) return false;
@@ -22,12 +46,16 @@ boolean insertSymbol(SymbolTable *table, const char *id, SymbolType t, int scope
 
 SymbolEntry *findSymbol(const SymbolTable *table, const char *id, int scopeWanted) {
     SymbolEntry *best = NULL;
+    logDebugging(_logger, "SKIBIDI: %s ==8\n", id);
+
     for (SymbolEntry *p = table->head; p; p = p->next) {
-        if (strcmp(p->identifier, id) != 0) continue;
-        if (scopeWanted < 0) {
-            if (!best || p->scope > best->scope) best = p;
-        } else if (p->scope == scopeWanted) {
-            return p;
+        logDebugging(_logger, "SKIBIDI: %s - id: %s scope: %d\n", id, p->identifier, p->scope);
+        if (strcmp(p->identifier, id) == 0) {
+            if (scopeWanted < 0) {
+                if (!best || p->scope > best->scope) best = p;
+            } else if (p->scope == scopeWanted) {
+                return p;
+            }
         }
     }
     return best;
@@ -57,7 +85,7 @@ boolean updateSymbolValue(SymbolTable *table, const char *id, int scope, const v
         case SYMBOL_SEMAPHORE: 
             e->data.semaphoreValue = *(const int*)data; 
             break;
-        case FUNCTION: 
+        case SYMBOL_FUNCTION: 
             e->data.functionType = *(const SymbolType*)data; 
             break;
     }
@@ -135,7 +163,7 @@ static SymbolEntry *newEntry(const char *id, SymbolType t, int scope, const void
         case SYMBOL_FLOAT: e->data.floatValue = *(const float*)data; break;
         case SYMBOL_BOOLEAN: e->data.booleanValue = *(const boolean*)data; break;
         case SYMBOL_SEMAPHORE: e->data.semaphoreValue = *(const int*)data; break;
-        case FUNCTION: e->data.functionType = *(const SymbolType*)data; break;
+        case SYMBOL_FUNCTION: e->data.functionType = *(const SymbolType*)data; break;
     }
     return e;
 }

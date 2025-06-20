@@ -9,7 +9,7 @@ int reader() {
         down(queue);
         down(mutex);
         rc++;
-        if ( 1 ) {
+        if ( 1 >  ) {
             down(db);
         }
         up(queue);
@@ -19,7 +19,7 @@ int reader() {
 
         down(mutex);
         rc--;
-        if( 0 ) {
+        if( 1 > 0 ) {
             up(db);
         }
         up(mutex);

@@ -11,6 +11,8 @@ void shutdownBisonActionsModule() {
     if (_logger != NULL) {
         destroyLogger(_logger);
     }
+    // freeSymbolTable(&currentCompilerState()->symbolTable);
+    // freeScopeStack(&currentCompilerState()->scopeStack);
 }
 
 /** IMPORTED FUNCTIONS */
@@ -18,12 +20,53 @@ extern unsigned int flexCurrentContext(void);
 
 /* PRIVATE FUNCTIONS */
 static void _logSyntacticAnalyzerAction(const char* functionName);
+static SymbolType convertTypeNodeToSymbolType(TypeNodeType typeNodeType);
+static boolean isCompatibleType(SymbolType expected, SymbolType actual);
 
 /**
  * Logs a syntactic-analyzer action in DEBUGGING level.
  */
 static void _logSyntacticAnalyzerAction(const char* functionName) {
     logDebugging(_logger, "%s", functionName);
+}
+
+/**
+ * Converts TypeNodeType to SymbolType
+ */
+static SymbolType convertTypeNodeToSymbolType(TypeNodeType typeNodeType) {
+    switch (typeNodeType) {
+        case TYPE_INTEGER: return SYMBOL_INTEGER;
+        case TYPE_FLOAT: return SYMBOL_FLOAT;
+        case TYPE_BOOLEAN: return SYMBOL_BOOLEAN;
+        case TYPE_STRING: return SYMBOL_STRING;
+        case TYPE_SEM: return SYMBOL_SEMAPHORE;
+        default: return SYMBOL_INTEGER; // Default fallback
+    }
+}
+
+/**
+ * Checks if two types are compatible
+ */
+static boolean isCompatibleType(SymbolType expected, SymbolType actual) {
+    if (expected == actual) return true;
+    // Add type coercion rules if needed
+    if ((expected == SYMBOL_FLOAT && actual == SYMBOL_INTEGER) ||
+        (expected == SYMBOL_INTEGER && actual == SYMBOL_FLOAT)) {
+        return true;
+    }
+    return false;
+}
+
+/* PUBLIC FUNCTIONS - Scope Management */
+void enterScope() {
+    pushScope(&currentCompilerState()->scopeStack);
+    logDebugging(_logger, "Entered new scope: %d", currentScope(&currentCompilerState()->scopeStack));
+}
+
+void exitScope() {
+    int scope = currentScope(&currentCompilerState()->scopeStack);
+    logDebugging(_logger, "Exiting scope: %d", scope);
+    popScope(&currentCompilerState()->scopeStack, &currentCompilerState()->symbolTable);
 }
 
 /* PUBLIC FUNCTIONS - Constants */
@@ -81,6 +124,15 @@ Expression* ConstantExpressionSemanticAction(Constant* constant) {
 Expression* IdentifierExpressionSemanticAction(char* identifier) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
+    // Check if identifier exists in symbol table
+    SymbolEntry* entry = findSymbol(&currentCompilerState()->symbolTable, identifier, -1); // -1 for any scope
+    if (!entry) {
+        logError(_logger, "Undefined identifier: %s", identifier);
+        // Continue parsing but mark error
+    } else {
+        logDebugging(_logger, "Found identifier %s in scope %d", identifier, entry->scope);
+    }
+    
     Expression* expression = calloc(1, sizeof(Expression));
     expression->identifier = identifier;
     expression->type = EXPR_IDENTIFIER;
@@ -90,6 +142,8 @@ Expression* IdentifierExpressionSemanticAction(char* identifier) {
 
 Expression* BinaryExpressionSemanticAction(Expression* leftExpression, Expression* rightExpression, ExpressionType type) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    // TODO: Add type checking for binary operations
     
     Expression* expression = calloc(1, sizeof(Expression));
     expression->binary.leftExpression = leftExpression;
@@ -111,6 +165,17 @@ Expression* UnaryExpressionSemanticAction(Expression* subExpression, ExpressionT
 
 Expression* FunctionCallExpressionSemanticAction(char* functionName, ArgumentList* arguments) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    // Check if function exists in symbol table
+    SymbolEntry* entry = findSymbol(&currentCompilerState()->symbolTable, functionName, -1);
+    if (!entry) {
+        logError(_logger, "Undefined function: %s", functionName);
+    } else if (entry->type != SYMBOL_FUNCTION) {
+        logError(_logger, "Identifier %s is not a function", functionName);
+    } else {
+        logDebugging(_logger, "Found function %s", functionName);
+        // TODO: Check argument count and types
+    }
     
     Expression* expression = calloc(1, sizeof(Expression));
     expression->functionCall.functionName = functionName;
@@ -173,9 +238,7 @@ Condition* ExpressionAsConditionSemanticAction(Expression* expression){
     return condition;
 }
 
-
 /* PUBLIC FUNCTIONS - Relational Operator */
-
 RelationalOperator* RelationalOperatorSemanticAction(RelationalOperatorType type) {
     RelationalOperator* op = calloc(1, sizeof(RelationalOperator));
     if (!op) return NULL;  
@@ -207,6 +270,84 @@ DeclarationTail* DeclarationSemanticAction(Constant* value) {
 DeclarationList* DeclarationListSemanticAction(TypeNode* type, char* identifier, DeclarationTail* declarationTail, DeclarationList* next) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
 
+    int currentScopeId = currentScope(&currentCompilerState()->scopeStack);
+    SymbolType symbolType = convertTypeNodeToSymbolType(type->type);
+    
+    // Handle different declaration types
+    if (declarationTail) {
+        if (declarationTail->type == DECL_FUNCTION) {
+            // Function declaration
+            SymbolEntry* existing = findSymbol(&currentCompilerState()->symbolTable, identifier, currentScopeId);
+            if (existing) {
+                logError(_logger, "Function %s already declared in current scope", identifier);
+            } else {
+                if (insertSymbol(&currentCompilerState()->symbolTable, identifier, SYMBOL_FUNCTION, currentScopeId, &symbolType)) {
+                    logDebugging(_logger, "Declared function %s with return type %d", identifier, symbolType);
+                }
+            }
+        } else if (declarationTail->type == DECL_CONSTANT) {
+            // Variable declaration with initialization
+            SymbolEntry* existing = findSymbol(&currentCompilerState()->symbolTable, identifier, currentScopeId);
+            if (existing) {
+                logError(_logger, "Variable %s already declared in current scope", identifier);
+            } else {
+                void* initValue = NULL;
+                switch (declarationTail->constant->type) {
+                    case CONST_INTEGER:
+                        initValue = &declarationTail->constant->integer;
+                        break;
+                    case CONST_FLOAT:
+                        initValue = &declarationTail->constant->floatVal;
+                        break;
+                    case CONST_BOOLEAN:
+                        initValue = &declarationTail->constant->boolean;
+                        break;
+                    case CONST_STRING:
+                        initValue = declarationTail->constant->string;
+                        break;
+                }
+                
+                if (insertSymbol(&currentCompilerState()->symbolTable, identifier, symbolType, currentScopeId, initValue)) {
+                    logDebugging(_logger, "Declared and initialized variable %s", identifier);
+                }
+            }
+        }
+    } else {
+        // Simple variable declaration without initialization
+        SymbolEntry* existing = findSymbol(&currentCompilerState()->symbolTable, identifier, currentScopeId);
+        if (existing) {
+            logError(_logger, "Variable %s already declared in current scope", identifier);
+        } else {
+            void* defaultValue = NULL;
+            int intVal = 0;
+            float floatVal = 0.0f;
+            boolean boolVal = false;
+            char* stringVal = "";
+            
+            switch (symbolType) {
+                case SYMBOL_INTEGER:
+                case SYMBOL_SEMAPHORE:
+                    defaultValue = &intVal;
+                    break;
+                case SYMBOL_FLOAT:
+                    defaultValue = &floatVal;
+                    break;
+                case SYMBOL_BOOLEAN:
+                    defaultValue = &boolVal;
+                    break;
+                case SYMBOL_STRING:
+                    defaultValue = stringVal;
+                    break;
+                case SYMBOL_FUNCTION:
+                    break;
+            }
+            
+            if (insertSymbol(&currentCompilerState()->symbolTable, identifier, symbolType, currentScopeId, defaultValue)) {
+                logDebugging(_logger, "Declared variable %s of type %d", identifier, symbolType);
+            }
+        }
+    }
+
     DeclarationList* declarationList = calloc(1, sizeof(DeclarationList));
     declarationList->type = type;
     declarationList->identifier = identifier;
@@ -220,6 +361,48 @@ DeclarationList* DeclarationListSemanticAction(TypeNode* type, char* identifier,
 VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, char* identifier, Condition* condition) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
+    int currentScopeId = currentScope(&currentCompilerState()->scopeStack);
+    SymbolType symbolType = convertTypeNodeToSymbolType(type->type);
+    
+    // Check if identifier already exists in current scope
+    SymbolEntry* existing = findSymbol(&currentCompilerState()->symbolTable, identifier, currentScopeId);
+    if (existing) {
+        logError(_logger, "Identifier %s already declared in current scope", identifier);
+    } else {
+        // Insert symbol with default value
+        void* defaultValue = NULL;
+        int intVal = 0;
+        float floatVal = 0.0f;
+        boolean boolVal = false;
+        char* stringVal = "";
+        
+        switch (symbolType) {
+            case SYMBOL_INTEGER:
+            case SYMBOL_SEMAPHORE:
+                defaultValue = &intVal;
+                break;
+            case SYMBOL_FLOAT:
+                defaultValue = &floatVal;
+                break;
+            case SYMBOL_BOOLEAN:
+                defaultValue = &boolVal;
+                break;
+            case SYMBOL_STRING:
+                defaultValue = stringVal;
+                break;
+            case SYMBOL_FUNCTION:
+                // Functions handled separately
+                break;
+        }
+        
+        if (insertSymbol(&currentCompilerState()->symbolTable, identifier, symbolType, currentScopeId, defaultValue)) {
+            logDebugging(_logger, "Declared variable %s of type %d in scope %d", 
+                        identifier, symbolType, currentScopeId);
+        } else {
+            logError(_logger, "Failed to insert symbol %s", identifier);
+        }
+    }
+    
     VariableDeclaration* variableDeclaration = calloc(1, sizeof(VariableDeclaration));
     variableDeclaration->type = type;
     variableDeclaration->identifier = identifier;
@@ -231,6 +414,18 @@ VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, 
 /* PUBLIC FUNCTIONS - Function Identifiers */
 FunctionIdentifier* FunctionIdentifierSemanticAction(FunctionIdentifierType type, char* identifier) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    if (type == FUNC_USER_DEFINED && identifier) {
+        // Check if function exists in symbol table
+        SymbolEntry* entry = findSymbol(&currentCompilerState()->symbolTable, identifier, -1);
+        if (!entry) {
+            logError(_logger, "Undefined function: %s", identifier);
+        } else if (entry->type != SYMBOL_FUNCTION) {
+            logError(_logger, "Identifier %s is not a function", identifier);
+        } else {
+            logDebugging(_logger, "Found user-defined function %s", identifier);
+        }
+    }
     
     FunctionIdentifier* functionIdentifier = calloc(1, sizeof(FunctionIdentifier));
     functionIdentifier->type = type;
@@ -289,6 +484,19 @@ ForUpdate* ForUpdateSemanticAction(SimpleStatement* statement, ForUpdate* nextUp
 SimpleStatement* FunctionCallSimpleStatementSemanticAction(FunctionIdentifier* function, ArgumentList* arguments) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
+    if (function->type == FUNC_USER_DEFINED && function->identifier) {
+        // Check if function exists in symbol table
+        SymbolEntry* entry = findSymbol(&currentCompilerState()->symbolTable, function->identifier, -1);
+        if (!entry) {
+            logError(_logger, "Undefined function: %s", function->identifier);
+        } else if (entry->type != SYMBOL_FUNCTION) {
+            logError(_logger, "Identifier %s is not a function", function->identifier);
+        } else {
+            logDebugging(_logger, "Calling function %s", function->identifier);
+            // TODO: Check argument count and types
+        }
+    }
+    
     SimpleStatement* simpleStatement = calloc(1, sizeof(SimpleStatement));
     simpleStatement->functionCall.function = function;
     simpleStatement->functionCall.arguments = arguments;
@@ -299,6 +507,16 @@ SimpleStatement* FunctionCallSimpleStatementSemanticAction(FunctionIdentifier* f
 
 SimpleStatement* IncrementSimpleStatementSemanticAction(char* identifier, boolean isPrefix) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    // Check if identifier exists and is numeric
+    SymbolEntry* entry = findSymbol(&currentCompilerState()->symbolTable, identifier, -1);
+    if (!entry) {
+        logError(_logger, "Increment of undefined identifier: %s", identifier);
+    } else if (entry->type != SYMBOL_INTEGER && entry->type != SYMBOL_FLOAT) {
+        logError(_logger, "Cannot increment non-numeric identifier: %s", identifier);
+    } else {
+        logDebugging(_logger, "Incrementing %s", identifier);
+    }
     
     SimpleStatement* simpleStatement = calloc(1, sizeof(SimpleStatement));
     simpleStatement->increment.identifier = identifier;
@@ -311,6 +529,16 @@ SimpleStatement* IncrementSimpleStatementSemanticAction(char* identifier, boolea
 SimpleStatement* DecrementSimpleStatementSemanticAction(char* identifier, boolean isPrefix) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
+    // Check if identifier exists and is numeric
+    SymbolEntry* entry = findSymbol(&currentCompilerState()->symbolTable, identifier, -1);
+    if (!entry) {
+        logError(_logger, "Decrement of undefined identifier: %s", identifier);
+    } else if (entry->type != SYMBOL_INTEGER && entry->type != SYMBOL_FLOAT) {
+        logError(_logger, "Cannot decrement non-numeric identifier: %s", identifier);
+    } else {
+        logDebugging(_logger, "Decrementing %s", identifier);
+    }
+    
     SimpleStatement* simpleStatement = calloc(1, sizeof(SimpleStatement));
     simpleStatement->decrement.identifier = identifier;
     simpleStatement->decrement.isPrefix = isPrefix;
@@ -321,6 +549,15 @@ SimpleStatement* DecrementSimpleStatementSemanticAction(char* identifier, boolea
 
 SimpleStatement* AssignmentSimpleStatementSemanticAction(char* identifier, Expression* expression) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    // Check if identifier exists
+    SymbolEntry* entry = findSymbol(&currentCompilerState()->symbolTable, identifier, -1);
+    if (!entry) {
+        logError(_logger, "Assignment to undefined identifier: %s", identifier);
+    } else {
+        logDebugging(_logger, "Assignment to %s (type: %d)", identifier, entry->type);
+        // TODO: Check type compatibility between identifier and expression
+    }
     
     SimpleStatement* simpleStatement = calloc(1, sizeof(SimpleStatement));
     simpleStatement->assignment.identifier = identifier;
@@ -352,6 +589,14 @@ SimpleStatement* ReturnConstantSimpleStatementSemanticAction(Constant* constant)
 
 SimpleStatement* ReturnIdentifierSimpleStatementSemanticAction(char* identifier) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
+    
+    // Check if identifier exists
+    SymbolEntry* entry = findSymbol(&currentCompilerState()->symbolTable, identifier, -1);
+    if (!entry) {
+        logError(_logger, "Return of undefined identifier: %s", identifier);
+    } else {
+        logDebugging(_logger, "Returning identifier %s", identifier);
+    }
     
     SimpleStatement* simpleStatement = calloc(1, sizeof(SimpleStatement));
     simpleStatement->identifier = identifier;
@@ -398,12 +643,18 @@ OpenStatement* WhileOpenStatementSemanticAction(Condition* condition, OpenStatem
 OpenStatement* ForOpenStatementSemanticAction(ForInitializer* initializer, Condition* condition, ForUpdate* update, OpenStatement* body) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
+    // Enter new scope for for-loop
+    enterScope();
+    
     OpenStatement* openStatement = calloc(1, sizeof(OpenStatement));
     openStatement->forStatement.initializer = initializer;
     openStatement->forStatement.condition = condition;
     openStatement->forStatement.update = update;
     openStatement->forStatement.body = body;
     openStatement->type = OPEN_FOR;
+    
+    // Exit for-loop scope
+    exitScope();
     
     return openStatement;
 }
@@ -422,9 +673,15 @@ ClosedStatement* SimpleClosedStatementSemanticAction(SimpleStatement* simpleStat
 ClosedStatement* ClosedListStatementSemanticAction(StatementList* statementList){
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
+    // Enter new scope for block
+    enterScope();
+    
     ClosedStatement* closedStatement = calloc(1, sizeof(ClosedStatement));
     closedStatement->closedStatementList.statementList = statementList;
     closedStatement->type = CLOSED_STATEMENT_LIST;
+    
+    // Exit block scope
+    exitScope();
     
     return closedStatement;
 }
@@ -455,12 +712,18 @@ ClosedStatement* WhileClosedStatementSemanticAction(Condition* condition, Closed
 ClosedStatement* ForClosedStatementSemanticAction(ForInitializer* initializer, Condition* condition, ForUpdate* update, ClosedStatement* body) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
+    // Enter new scope for for-loop
+    enterScope();
+    
     ClosedStatement* closedStatement = calloc(1, sizeof(ClosedStatement));
     closedStatement->forStatement.initializer = initializer;
     closedStatement->forStatement.condition = condition;
     closedStatement->forStatement.update = update;
     closedStatement->forStatement.body = body;
     closedStatement->type = CLOSED_FOR;
+    
+    // Exit for-loop scope
+    exitScope();
     
     return closedStatement;
 }
@@ -568,12 +831,61 @@ StatementList* StatementListSemanticAction(Statement* statement, StatementList* 
 /* PUBLIC FUNCTIONS - Functions */
 DeclarationTail* FunctionSemanticAction(ParameterList* parameters, StatementList* body) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
-    logDebugging(_logger, "exec FunctionListSemanticAction");
+    logDebugging(_logger, "exec FunctionSemanticAction");
+
+    // Enter function scope for parameters and body
+    enterScope();
+    
+    // Add parameters to symbol table
+    ParameterList* param = parameters;
+    while (param) {
+        SymbolType paramType = convertTypeNodeToSymbolType(param->type->type);
+        int currentScopeId = currentScope(&currentCompilerState()->scopeStack);
+        
+        // Check if parameter already exists in current scope
+        SymbolEntry* existing = findSymbol(&currentCompilerState()->symbolTable, param->identifier, currentScopeId);
+        if (existing) {
+            logError(_logger, "Parameter %s already declared", param->identifier);
+        } else {
+            void* defaultValue = NULL;
+            int intVal = 0;
+            float floatVal = 0.0f;
+            boolean boolVal = false;
+            char* stringVal = "";
+            
+            switch (paramType) {
+                case SYMBOL_INTEGER:
+                case SYMBOL_SEMAPHORE:
+                    defaultValue = &intVal;
+                    break;
+                case SYMBOL_FLOAT:
+                    defaultValue = &floatVal;
+                    break;
+                case SYMBOL_BOOLEAN:
+                    defaultValue = &boolVal;
+                    break;
+                case SYMBOL_STRING:
+                    defaultValue = stringVal;
+                    break;
+                case SYMBOL_FUNCTION:
+                    break;
+            }
+            
+            if (insertSymbol(&currentCompilerState()->symbolTable, param->identifier, paramType, currentScopeId, defaultValue)) {
+                logDebugging(_logger, "Added parameter %s to function scope", param->identifier);
+            }
+        }
+        
+        param = param->next;
+    }
 
     DeclarationTail* declarationTail = calloc(1, sizeof(DeclarationTail));
     declarationTail->function.parameterList = parameters;
     declarationTail->function.statementList = body;
     declarationTail->type = DECL_FUNCTION;
+    
+    // Exit function scope
+    exitScope();
     
     return declarationTail;
 }
@@ -598,11 +910,20 @@ Program* ProgramSemanticAction(DeclarationList* globalDeclarations, CompilerStat
     program->globalDeclarations = globalDeclarations;
     compilerState->abstractSyntaxtTree = program;
     
+    // Dump symbol table for debugging
+    logDebugging(_logger, "Final symbol table:");
+    dumpSymbolTable(&currentCompilerState()->symbolTable);
+    
     if (0 < flexCurrentContext()) {
         logError(_logger, "The final context is not the default (0): %d", flexCurrentContext());
         compilerState->succeed = false;
     } else {
         compilerState->succeed = true;
+    }
+
+    if(!CheckTypeProgram(program)) {
+        logError(_logger, "Type checking failed for the program.");
+        compilerState->succeed = false;
     }
     
     return program;

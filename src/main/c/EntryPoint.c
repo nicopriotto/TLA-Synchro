@@ -15,11 +15,43 @@
  * find you, and I will kill you (Bryan Mills; "Taken", 2008).
  */
 const int main(const int count, const char ** arguments) {
+
 	Logger * logger = createLogger("EntryPoint");
+
+	logDebugging(logger, "\nINITIALIZING MODULES!!!!\n");
 	initializeFlexActionsModule();
 	initializeBisonActionsModule();
 	initializeSyntacticAnalyzerModule();
 	initializeAbstractSyntaxTreeModule();
+	initializeSymbolTableModule();
+	initializeTypeCheckingModule();
+	logDebugging(logger, "\nFINISHEDDD INITIALIZING MODULES!!!!\n");
+	
+	logDebugging(logger, "\n GENERATING COMPILER STATE!\n");
+	CompilerState compilerState = {
+		.abstractSyntaxtTree = NULL,
+		.symbolTable = NULL,
+		.scopeStack = initScopeStack(),
+		.succeed = false,
+		.value = 0
+	};
+
+	logDebugging(logger, "\n COMPILER STATE GENERATED ALL GOOD\n");
+
+	logDebugging(logger, "\n CALLING PARSE PARSE PARSEEE\n");
+	const SyntacticAnalysisStatus syntacticAnalysisStatus = parse(&compilerState);
+	logDebugging(logger, "\n PARSED!! LETS PUSH SCOPE NOW BROTHER\n");
+  logDebugging(logger, "\nEL PUNTERO ES: %p\n", &currentCompilerState()->scopeStack);
+
+    insertSymbol(&(compilerState.symbolTable), "print", SYMBOL_FUNCTION, -1, NULL);
+    insertSymbol(&(compilerState.symbolTable), "sleep", SYMBOL_FUNCTION, -1, NULL);
+    insertSymbol(&(compilerState.symbolTable), "up", SYMBOL_FUNCTION, -1, NULL);
+    insertSymbol(&(compilerState.symbolTable), "down", SYMBOL_FUNCTION, -1, NULL);
+    insertSymbol(&(compilerState.symbolTable), "thread", SYMBOL_FUNCTION, -1, NULL);
+	
+	// pushScope(&currentCompilerState()->scopeStack);
+		// logDebugging(logger, "\n PUSH DONE\n");
+	
 	// initializeCalculatorModule();
 	// initializeGeneratorModule();
 
@@ -29,14 +61,8 @@ const int main(const int count, const char ** arguments) {
 	}
 
 	// Begin compilation process.
-	CompilerState compilerState = {
-		.abstractSyntaxtTree = NULL,
-		.succeed = false,
-		.value = 0
-	};
-	const SyntacticAnalysisStatus syntacticAnalysisStatus = parse(&compilerState);
 	CompilationStatus compilationStatus = SUCCEED;
-	Program * program = compilerState.abstractSyntaxtTree;
+	Program * program = compilerState.abstractSyntaxtTree;	
 	if (syntacticAnalysisStatus == ACCEPT) {
 		// ----------------------------------------------------------------------------------------
 		// Beginning of the Backend... ------------------------------------------------------------
@@ -62,10 +88,12 @@ const int main(const int count, const char ** arguments) {
 	logDebugging(logger, "Releasing modules resources...");
 	// shutdownGeneratorModule();
 	// shutdownCalculatorModule();
-	shutdownAbstractSyntaxTreeModule();
-	shutdownSyntacticAnalyzerModule();
-	shutdownBisonActionsModule();
-	shutdownFlexActionsModule();
+	// shutdownAbstractSyntaxTreeModule();
+	// shutdownSyntacticAnalyzerModule();
+	// shutdownBisonActionsModule();
+	// shutdownFlexActionsModule();
+	// shutdownTypeCheckingModule();
+	// shutdownSymbolTableModule();
 	logDebugging(logger, "Compilation is done.");
 	destroyLogger(logger);
 	return compilationStatus;

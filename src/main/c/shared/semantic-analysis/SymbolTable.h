@@ -2,6 +2,7 @@
 #define SYMBOL_TABLE_H
 #include "../Type.h"
 #include <stddef.h>
+#include "../Logger.h"
 
 typedef enum {
     SYMBOL_INTEGER,
@@ -31,6 +32,10 @@ typedef struct {
     SymbolEntry *head;
 } SymbolTable;
 
+void initializeSymbolTableModule();
+void shutdownSymbolTableModule();
+
+SymbolTable initializeSymbolTable();
 void initSymbolTable(SymbolTable *table);
 boolean insertSymbol(SymbolTable *table,const char *identifier,SymbolType type,int scope,const void *data);
 SymbolEntry *findSymbol(const SymbolTable *table,const char *identifier,int scope);

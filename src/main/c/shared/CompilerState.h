@@ -3,6 +3,7 @@
 
 #include "Type.h"
 #include "semantic-analysis/SymbolTable.h"
+#include "semantic-analysis/ScopeStack.h"
 
 /**
  * The general status of a compilation.
@@ -24,12 +25,7 @@ typedef struct {
 	boolean succeed;
 
 	SymbolTable symbolTable;
-
-	// TODO: Add an stack to handle nested scopes.
-	// TODO: Add a symbol table.
-	
-	// TODO: Add configuration.
-	// TODO: ...
+	ScopeStack scopeStack;
 
 	// The computed value of the entire program (only for the calculator).
 	int value;

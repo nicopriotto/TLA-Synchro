@@ -70,7 +70,7 @@ static const char * _toContextString(const LoggingLevel loggingLevel) {
 
 Logger * createLogger(char * name) {
 	Logger * logger = calloc(1, sizeof(Logger));
-	logger->loggingLevel = _loggingLevelFromString(getStringOrDefault("LOGGING_LEVEL", "INFORMATION"));
+	logger->loggingLevel = _loggingLevelFromString(getStringOrDefault("LOGGING_LEVEL", "ALL"));
 	logger->name = calloc(1 + strlen(name), sizeof(char));
 	strcpy(logger->name, name);
 	return logger;
