@@ -252,11 +252,11 @@ forUpdate: forUpdateNotEmpty                                                    
 forUpdateNotEmpty: simpleStatement                                                                                                                  { $$ = ForUpdateSemanticAction($1, NULL); }
     | simpleStatement COMMA forUpdateNotEmpty                                                                                                       { $$ = ForUpdateSemanticAction($1, $3); };
 
-functionIdentifier: PRINT                                                                                                                           { $$ = FunctionIdentifierSemanticAction(FUNC_PRINT, NULL); }
-    | SLEEP                                                                                                                                         { $$ = FunctionIdentifierSemanticAction(FUNC_SLEEP, NULL); }
-    | UP                                                                                                                                            { $$ = FunctionIdentifierSemanticAction(FUNC_UP, NULL); }
-    | DOWN                                                                                                                                          { $$ = FunctionIdentifierSemanticAction(FUNC_DOWN, NULL); }
-    | THREAD                                                                                                                                        { $$ = FunctionIdentifierSemanticAction(FUNC_THREAD, NULL); }
+functionIdentifier: PRINT                                                                                                                           { $$ = FunctionIdentifierSemanticAction(FUNC_PRINT, "print"); }
+    | SLEEP                                                                                                                                         { $$ = FunctionIdentifierSemanticAction(FUNC_SLEEP, "sleep"); }
+    | UP                                                                                                                                            { $$ = FunctionIdentifierSemanticAction(FUNC_UP, "up"); }
+    | DOWN                                                                                                                                          { $$ = FunctionIdentifierSemanticAction(FUNC_DOWN, "down"); }
+    | THREAD                                                                                                                                        { $$ = FunctionIdentifierSemanticAction(FUNC_THREAD, "thread"); }
     | IDENTIFIER                                                                                                                                    { $$ = FunctionIdentifierSemanticAction(FUNC_USER_DEFINED, $1); }
     ;
 

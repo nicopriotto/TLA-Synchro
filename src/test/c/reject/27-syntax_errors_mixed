@@ -1,0 +1,27 @@
+// Mixed syntax errors
+int main() {
+    // Missing operators
+    int x = 5 10;           // Missing operator between numbers
+    int y = x 5;            // Missing operator
+    
+    // Invalid identifiers
+    int 2invalid = 5;       // Starts with number
+    int invalid-name = 10;  // Contains hyphen
+    int invalid.name = 15;  // Contains dot
+    
+    // Invalid literals
+    int hex = 0x123;        // Hexadecimal not supported
+    float scientific = 1e5; // Scientific notation not supported
+    string unterminated = "hello world;  // Unterminated string
+    
+    // Invalid comments
+    /* unterminated comment
+    int z = 20;
+    
+    // Invalid control characters
+    int tab	var = 5;        // Tab in identifier
+    int newline
+    var = 10;               // Newline in identifier
+    
+    return x;
+}

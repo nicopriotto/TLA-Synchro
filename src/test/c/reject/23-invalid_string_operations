@@ -1,0 +1,25 @@
+// Invalid string operations
+int main() {
+    string msg1 = "hello";
+    string msg2 = "world";
+    int x = 5;
+    
+    // Invalid string operations
+    string result1 = msg1 + msg2;    // String concatenation not supported
+    string result2 = msg1 * x;       // String multiplication not supported
+    string result3 = msg1 - msg2;    // String subtraction not supported
+    
+    // Invalid string comparisons
+    if (msg1 > msg2) {               // String comparison not supported
+        print(1);
+    }
+    
+    // Invalid string assignments
+    msg1 = x;                        // int to string
+    x = msg1;                        // string to int
+    
+    // Invalid string indexing
+    char c = msg1[0];                // Array indexing not supported
+    
+    return 0;
+}

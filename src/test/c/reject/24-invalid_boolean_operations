@@ -1,0 +1,26 @@
+// Invalid boolean operations
+int main() {
+    boolean flag1 = true;
+    boolean flag2 = false;
+    int x = 5;
+    
+    // Invalid boolean arithmetic
+    boolean result1 = flag1 + flag2;  // Boolean addition not supported
+    boolean result2 = flag1 * x;      // Boolean multiplication not supported
+    int result3 = flag1 / flag2;      // Boolean division not supported
+    
+    // Invalid boolean comparisons
+    if (flag1 > flag2) {              // Boolean ordering not supported
+        print(1);
+    }
+    
+    // Invalid logical operations
+    boolean result4 = flag1 && flag2; // Use 'and' instead of &&
+    boolean result5 = flag1 || flag2; // Use 'or' instead of ||
+    boolean result6 = !flag1;         // Use 'not' instead of !
+    
+    // Invalid boolean assignments
+    flag1 = x;                        // int to boolean without comparison
+    
+    return 0;
+}

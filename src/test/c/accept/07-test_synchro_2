@@ -1,7 +1,7 @@
 sem mutex = 1;
 
 int A() {
-    while(1 > 1) {
+    while(2 > 1) {
         down(mutex);
         print("ACCESO SECCION CRITICA - A");
         up(mutex);
@@ -9,7 +9,7 @@ int A() {
 }
 
 int B() {
-    while(1 > 1) {
+    while(2 > 1) {
         down(mutex);
         print("ACCESO SECCION CRITICA - B");
         up(mutex);
@@ -17,7 +17,8 @@ int B() {
 }
 
 int main() {
+    int a = 0;
     thread(A, 2);   
     thread(B, 5);
-    return status;
+    return 0;
 }

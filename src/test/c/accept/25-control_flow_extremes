@@ -1,0 +1,43 @@
+// Extreme control flow combinations
+int main() {
+    int state = 0;
+    boolean continue_loop = true;
+    
+    while (continue_loop) {
+        if (state == 0) {
+            for (int i = 0; i < 5; i++) {
+                if (i == 2) {
+                    state = 1;
+                } else {
+                    if (i % 2 == 0) {
+                        forever {
+                            print(i);
+                            if (i > 10) {
+                                state = 2;
+                                continue_loop = false;
+                                return i;
+                            }
+                            i++;
+                        }
+                    }
+                }
+            }
+        } else {
+            if (state == 1) {
+                while (state < 10) {
+                    state++;
+                    if (state == 5) {
+                        for (int j = 0; j < 3; j++) {
+                            print(j + state);
+                        }
+                    }
+                }
+                continue_loop = false;
+            } else {
+                continue_loop = false;
+            }
+        }
+    }
+    
+    return state;
+}

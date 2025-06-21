@@ -39,7 +39,8 @@ int writer(string name) {
 }
 
 int main() {
-  //thread(writer("Pepe"));
-  //thread(reader);
+    reader(queue);
+//   thread(writer("Pepe"));
+//   thread(reader);
   return 0;
 }

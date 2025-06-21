@@ -11,6 +11,8 @@
 #include "frontend/syntactic-analysis/SyntacticAnalyzer.h"
 #include "frontend/syntactic-analysis/BisonActions.h"
 #include "frontend/lexical-analysis/FlexActions.h"
+#include "backend/domain-specific/SynchronizationRuntime.h"
+#include "backend/code-generation/Generator.h"
 
 /**
 * The main entry point of the Compiler.
@@ -27,6 +29,8 @@ int main(const int argumentCount, const char** arguments) {
    initializeSymbolTableModule();
    initializeTypeCheckingModule();
    initializeAbstractSyntaxTreeModule();
+	 initializeSynchronizationRuntimeModule();
+	 initializeGeneratorModule();
 
    logDebugging(logger, "=== MODULES INITIALIZED ===");
    
@@ -73,6 +77,27 @@ int main(const int argumentCount, const char** arguments) {
        logError(logger, "The syntactic-analysis phase rejects the input program.");
        compilationStatus = FAILED;
    }
+
+	if (compilationStatus == SUCCEED) {
+		// ----------------------------------------------------------------------------------------
+		// Beginning of the Backend... ------------------------------------------------------------
+		logDebugging(logger, "Computing/validating program...");
+		ComputationResult computationResult = computeProgram(compilerState.abstractSyntaxtTree);
+		if (computationResult.succeed) {
+			compilerState.value = computationResult.value;
+			generate(&compilerState);
+		}
+		else {
+			logError(logger, "The computation phase rejects the input program.");
+			compilerState.succeed = false;
+		}
+		// ...end of the Backend. -----------------------------------------------------------------
+		// ----------------------------------------------------------------------------------------
+	}
+	else {
+		logError(logger, "The syntactic analysis rejects the input program.");
+		compilerState.succeed = false;
+	}
    
    // Clean up resources
    logDebugging(logger, "Releasing AST resources...");

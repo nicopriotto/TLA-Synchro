@@ -1,0 +1,39 @@
+// Complex nested control structures with all combinations
+int main() {
+    int x = 5;
+    int y = 10;
+    boolean flag = true;
+    
+    if (x < y) {
+        while (x < y) {
+            if (flag) {
+                for (int i = 0; i < 3; i++) {
+                    if (i == 1) {
+                        print(i);
+                        x++;
+                    } else {
+                        if (x % 2 == 0) {
+                            sleep(1);
+                        } else {
+                            forever {
+                                print(x);
+                                if (x > 20) {
+                                    return 0;
+                                }
+                                x++;
+                            }
+                        }
+                    }
+                }
+            } else {
+                while (y > 0) {
+                    y--;
+                    if (y == 5) {
+                        flag = true;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}

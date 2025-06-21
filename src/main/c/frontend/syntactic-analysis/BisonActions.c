@@ -24,12 +24,28 @@ static SymbolType convertTypeNodeToSymbolType(TypeNodeType typeNodeType);
 static boolean isCompatibleType(SymbolType expected, SymbolType actual);
 static void preRegisterAllFunctions(DeclarationList* declarations);
 static void preRegisterFunction(TypeNode* type, char* identifier, DeclarationTail* declarationTail);
+static char* _getBuiltinFunctionIdentifier(FunctionIdentifierType type);
 
 /**
  * Logs a syntactic-analyzer action in DEBUGGING level.
  */
 static void _logSyntacticAnalyzerAction(const char* functionName) {
     logDebugging(_logger, "%s", functionName);
+}
+
+/**
+ * Gets the identifier string for built-in function types
+ */
+static char* _getBuiltinFunctionIdentifier(FunctionIdentifierType type) {
+    switch (type) {
+        case FUNC_PRINT: return strdup("print");
+        case FUNC_SLEEP: return strdup("sleep");
+        case FUNC_UP: return strdup("up");
+        case FUNC_DOWN: return strdup("down");
+        case FUNC_THREAD: return strdup("thread");
+        case FUNC_USER_DEFINED: return NULL; // Should be provided separately
+        default: return strdup("unknown");
+    }
 }
 
 /**
@@ -288,6 +304,8 @@ Expression* IdentifierExpressionSemanticAction(char* identifier) {
         logError(_logger, "Type check failed for identifier expression: %s", identifier);
         CompilerState* state = currentCompilerState();
         if (state) state->succeed = false;
+        // Free the identifier string before releasing the expression
+        free(identifier);
         releaseExpression(expression);
         return NULL;
     }
@@ -381,13 +399,23 @@ Condition* RelationalConditionSemanticAction(Expression* leftValue, RelationalOp
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     if (!leftValue || !operator || !rightValue) {
-        logError(_logger, "Cannot create relational condition with NULL components");
+        logError(_logger, "Cannot create relational condition with NULL components (left=%p, op=%p, right=%p)", 
+                 (void*)leftValue, (void*)operator, (void*)rightValue);
+        // Clean up any non-NULL components
+        if (leftValue) releaseExpression(leftValue);
+        if (operator) releaseRelationalOperator(operator);
+        if (rightValue) releaseExpression(rightValue);
         return NULL;
     }
+    
+    logDebugging(_logger, "Creating relational condition with operator type %d", operator->type);
     
     Condition* condition = calloc(1, sizeof(Condition));
     if (!condition) {
         logError(_logger, "Memory allocation failed for relational condition");
+        releaseExpression(leftValue);
+        releaseRelationalOperator(operator);
+        releaseExpression(rightValue);
         return NULL;
     }
     condition->leftValue = leftValue;
@@ -404,6 +432,7 @@ Condition* RelationalConditionSemanticAction(Expression* leftValue, RelationalOp
         return NULL;
     }
     
+    logDebugging(_logger, "Successfully created relational condition");
     return condition;
 }
 
@@ -552,15 +581,26 @@ VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, 
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
     if (!type || !identifier || !condition) {
-        logError(_logger, "Cannot create variable declaration with NULL components");
+        logError(_logger, "Cannot create variable declaration with NULL components (type=%p, id=%s, cond=%p)", 
+                 (void*)type, identifier ? identifier : "NULL", (void*)condition);
+        // Clean up allocated memory
+        if (identifier) free(identifier);
+        if (type) releaseTypeNode(type);
+        if (condition) releaseCondition(condition);
         return NULL;
     }
+    
+    logDebugging(_logger, "Creating variable declaration for '%s' with type %d", identifier, type->type);
     
     // IMMEDIATE TYPE CHECK
     if (!CheckTypeImmediate_VariableDeclaration(type, identifier, condition)) {
         logError(_logger, "Type check failed for variable declaration '%s'", identifier);
         CompilerState* state = currentCompilerState();
         if (state) state->succeed = false;
+        // Clean up allocated memory
+        free(identifier);
+        releaseTypeNode(type);
+        releaseCondition(condition);
         return NULL;
     }
     
@@ -577,6 +617,7 @@ VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, 
         SymbolEntry* existing = findSymbol(&state->symbolTable, identifier, currentScopeId);
         if (existing && existing->scope == currentScopeId) {
             logError(_logger, "Identifier %s already declared in current scope %d", identifier, currentScopeId);
+            // Don't return NULL here, just log the error but continue
         } else {
             if (insertSymbol(&state->symbolTable, identifier, symbolType, currentScopeId, NULL)) {
                 logDebugging(_logger, "Declared variable %s of type %d in scope %d", 
@@ -590,23 +631,22 @@ VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, 
     VariableDeclaration* variableDeclaration = calloc(1, sizeof(VariableDeclaration));
     if (!variableDeclaration) {
         logError(_logger, "Memory allocation failed for variable declaration");
+        free(identifier);
+        releaseTypeNode(type);
+        releaseCondition(condition);
         return NULL;
     }
     variableDeclaration->type = type;
     variableDeclaration->identifier = identifier; // Take ownership
     variableDeclaration->condition = condition;
     
+    logDebugging(_logger, "Successfully created variable declaration for '%s'", identifier);
     return variableDeclaration;
 }
 
 /* PUBLIC FUNCTIONS - Function Identifiers */
 FunctionIdentifier* FunctionIdentifierSemanticAction(FunctionIdentifierType type, char* identifier) {
     _logSyntacticAnalyzerAction(__FUNCTION__);
-    
-    // **LENIENT**: Don't do strict checking here, let the two-pass approach handle it
-    if (type == FUNC_USER_DEFINED && identifier) {
-        logDebugging(_logger, "Creating function identifier for user-defined function: %s", identifier);
-    }
     
     FunctionIdentifier* functionIdentifier = calloc(1, sizeof(FunctionIdentifier));
     if (!functionIdentifier) {
@@ -616,7 +656,24 @@ FunctionIdentifier* FunctionIdentifierSemanticAction(FunctionIdentifierType type
     functionIdentifier->type = type;
     
     if (type == FUNC_USER_DEFINED) {
-        functionIdentifier->identifier = identifier; // Take ownership
+        if (identifier) {
+            functionIdentifier->identifier = identifier; // Take ownership
+            logDebugging(_logger, "Creating function identifier for user-defined function: %s", identifier);
+        } else {
+            logError(_logger, "User-defined function requires identifier");
+            free(functionIdentifier);
+            return NULL;
+        }
+    } else {
+        // For built-in functions, set the identifier based on the type
+        functionIdentifier->identifier = identifier;
+        if (functionIdentifier->identifier) {
+            logDebugging(_logger, "Creating function identifier for built-in function: %s", functionIdentifier->identifier);
+        } else {
+            logError(_logger, "Failed to get identifier for built-in function type: %d", type);
+            free(functionIdentifier);
+            return NULL;
+        }
     }
     
     return functionIdentifier;
@@ -629,6 +686,25 @@ ParameterList* ParameterListSemanticAction(TypeNode* type, char* identifier, Par
     if (!type || !identifier) {
         logError(_logger, "Cannot create parameter list with NULL type or identifier");
         return NULL;
+    }
+    
+    // **FIX**: Register parameter immediately in current scope
+    CompilerState* state = currentCompilerState();
+    if (state) {
+        SymbolType paramType = convertTypeNodeToSymbolType(type->type);
+        int currentScopeId = currentScope(&state->scopeStack);
+        
+        // Check if parameter already exists in current scope
+        SymbolEntry* existing = findSymbol(&state->symbolTable, identifier, currentScopeId);
+        if (existing && existing->scope == currentScopeId) {
+            logError(_logger, "Parameter %s already declared in current scope %d", identifier, currentScopeId);
+        } else {
+            if (insertSymbol(&state->symbolTable, identifier, paramType, currentScopeId, NULL)) {
+                logDebugging(_logger, "Registered parameter %s of type %d in scope %d", identifier, paramType, currentScopeId);
+            } else {
+                logError(_logger, "Failed to register parameter %s", identifier);
+            }
+        }
     }
     
     ParameterList* parameterList = calloc(1, sizeof(ParameterList));
@@ -711,7 +787,12 @@ SimpleStatement* FunctionCallSimpleStatementSemanticAction(FunctionIdentifier* f
     }
     
     // **LENIENT**: Skip detailed type checking here, let the two-pass approach handle it
-    logDebugging(_logger, "Creating function call statement (type checking deferred)");
+    if (function->identifier != NULL) {
+        logDebugging(_logger, "Creating function call statement for: %s", function->identifier);
+    } else {
+        logError(_logger, "Function identifier is NULL in function call statement");
+        return NULL;
+    }
     
     SimpleStatement* simpleStatement = calloc(1, sizeof(SimpleStatement));
     if (!simpleStatement) {
@@ -946,7 +1027,6 @@ OpenStatement* ForOpenStatementSemanticAction(ForInitializer* initializer, Condi
         logError(_logger, "Cannot create for statement with NULL condition or body");
         return NULL;
     }
-    
     // **NEW APPROACH**: Create a temporary scope for for-loop variables during type checking
     // This ensures that for-loop variables are available when checking the condition and body
     CompilerState* state = currentCompilerState();
@@ -1016,10 +1096,10 @@ ClosedStatement* SimpleClosedStatementSemanticAction(SimpleStatement* simpleStat
 ClosedStatement* ClosedListStatementSemanticAction(StatementList* statementList){
     _logSyntacticAnalyzerAction(__FUNCTION__);
     
-    if (!statementList) {
-        logError(_logger, "Cannot create closed statement with NULL statement list");
-        return NULL;
-    }
+    // if (!statementList) {
+    //     logError(_logger, "Cannot create closed statement with NULL statement list");
+    //     return NULL;
+    // }
     
     // NOTE: Scope should already be entered when parsing the block
     // This function is called after statements are parsed, so we don't enter scope here
@@ -1271,28 +1351,9 @@ DeclarationTail* FunctionSemanticAction(ParameterList* parameters, StatementList
     _logSyntacticAnalyzerAction(__FUNCTION__);
     logDebugging(_logger, "Creating function declaration");
 
-    // Add parameters to symbol table (scope already entered by grammar)
-    CompilerState* state = currentCompilerState();
-    if (state) {
-        ParameterList* param = parameters;
-        while (param) {
-            SymbolType paramType = convertTypeNodeToSymbolType(param->type->type);
-            int currentScopeId = currentScope(&state->scopeStack);
-            
-            // Check if parameter already exists in current scope
-            SymbolEntry* existing = findSymbol(&state->symbolTable, param->identifier, currentScopeId);
-            if (existing && existing->scope == currentScopeId) {
-                logError(_logger, "Parameter %s already declared", param->identifier);
-            } else {
-                if (insertSymbol(&state->symbolTable, param->identifier, paramType, currentScopeId, NULL)) {
-                    logDebugging(_logger, "Added parameter %s to function scope %d", param->identifier, currentScopeId);
-                }
-            }
-            
-            param = param->next;
-        }
-    }
-
+    // **REMOVED**: Parameter registration now happens in ParameterListSemanticAction
+    // Parameters are already registered when they were created
+    
     DeclarationTail* declarationTail = calloc(1, sizeof(DeclarationTail));
     if (!declarationTail) {
         logError(_logger, "Memory allocation failed for function declaration tail");

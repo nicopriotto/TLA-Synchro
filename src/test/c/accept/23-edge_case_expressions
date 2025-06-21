@@ -1,0 +1,37 @@
+// Edge case expressions and operations
+int main() {
+    int zero = 0;
+    int one = 1;
+    int negative = -5;
+    
+    // Division by small numbers
+    int result1 = 100 / one;
+    int result2 = negative / one;
+    
+    // Modulo operations
+    int mod_result = 17 % 5;
+    int mod_negative = negative % 3;
+    
+    // Increment/decrement edge cases
+    int pre_inc = ++zero;
+    int post_inc = zero++;
+    int pre_dec = --one;
+    int post_dec = one--;
+    
+    // Complex assignment chains
+    int a, b, c;
+    a = b = c = 10;
+    
+    // Parentheses nesting
+    int nested = (((a + b) * c) - ((a - b) / (c + 1)));
+    
+    // Boolean conversion edge cases
+    boolean bool_from_zero = zero;
+    boolean bool_from_nonzero = negative;
+    
+    if (bool_from_zero or bool_from_nonzero) {
+        print(nested);
+    }
+    
+    return nested;
+}

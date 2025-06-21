@@ -1,0 +1,42 @@
+// Floating point operations and precision
+float pi = 3.14159;
+float e = 2.71828;
+
+int floating_calculations() {
+    float result = 0.0;
+    float increment = 0.1;
+    
+    // Accumulation with potential precision issues
+    for (int i = 0; i < 100; i++) {
+        result = result + increment;
+        if (result > 5.0) {
+            result = result - 1.0;
+        }
+    }
+    
+    // Complex floating point expressions
+    float complex_calc = (pi * e) / (pi + e) * (result - 2.5);
+    
+    // Floating point comparisons (potentially problematic)
+    if (complex_calc > 1.0 and complex_calc < 10.0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+int main() {
+    float local_float = 123.456;
+    int result = floating_calculations();
+    
+    // Mixed arithmetic
+    float mixed = local_float + result + pi;
+    
+    if (mixed > 100.0) {
+        print(1);
+    } else {
+        print(0);
+    }
+    
+    return result;
+}

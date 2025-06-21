@@ -1,0 +1,39 @@
+// Testing variable scoping in deeply nested blocks
+int global_var = 100;
+
+int test_scoping() {
+    int local_var = 200;
+    
+    {
+        int block_var = 300;
+        {
+            int deep_var = 400;
+            {
+                int deeper_var = 500;
+                {
+                    int deepest_var = 600;
+                    print(global_var + local_var + block_var + deep_var + deeper_var + deepest_var);
+                    
+                    for (int i = 0; i < 2; i++) {
+                        int loop_var = i * 10;
+                        if (i == 1) {
+                            int if_var = 777;
+                            while (if_var > 700) {
+                                int while_var = if_var - 50;
+                                print(while_var);
+                                if_var--;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return local_var;
+}
+
+int main() {
+    test_scoping();
+    return global_var;
+}

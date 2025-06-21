@@ -1,0 +1,29 @@
+// Invalid function call syntax
+int test_function(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    // Wrong number of arguments
+    int result1 = test_function(5);           // Too few arguments
+    int result2 = test_function(5, 10, 15);   // Too many arguments
+    
+    // Invalid argument types (if type checking is strict)
+    int result3 = test_function("hello", true);
+    
+    // Missing parentheses
+    int result4 = test_function 5, 10;
+    
+    // Invalid built-in function calls
+    print();                    // print requires argument
+    sleep("not a number");      // sleep requires int
+    up(5);                      // up takes no arguments
+    down(x, y);                 // down takes no arguments
+    
+    // Function call in invalid context
+    if (print(5)) {             // print returns void
+        return 1;
+    }
+    
+    return result1;
+}

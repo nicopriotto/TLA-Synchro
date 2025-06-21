@@ -1,0 +1,38 @@
+// Simulating function overloading with different parameter patterns
+int process_int(int value) {
+    int newValue = value * 2;
+    return newValue;
+}
+
+float process_float(float value) {
+    float newValue = value + 1.0;
+    return newValue;
+}
+
+int process_boolean(boolean flag) {
+    if (flag) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+int process_multiple(int a, float b, boolean c) {
+    if (c) {
+        int d = a + b;
+        return d;
+    } else {
+        int e = a - b;
+        return e;
+    }
+}
+
+int main() {
+    int result1 = process_int(5);
+    int result2 = process_float(3.14);
+    int result3 = process_boolean(true);
+    int result4 = process_multiple(10, 2.5, false);
+    int res = result1 + result2 + result3 + result4;
+    print(res);
+    return 0;
+}

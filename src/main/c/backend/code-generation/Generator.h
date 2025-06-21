@@ -7,6 +7,7 @@
 #include "../../shared/String.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 /** Initialize module's internal state. */
 void initializeGeneratorModule();
@@ -15,7 +16,7 @@ void initializeGeneratorModule();
 void shutdownGeneratorModule();
 
 /**
- * Generates the final output using the current compiler state.
+ * Generates the final C code output using the current compiler state.
  */
 void generate(CompilerState * compilerState);
 

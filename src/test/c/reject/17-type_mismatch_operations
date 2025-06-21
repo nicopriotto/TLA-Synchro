@@ -1,0 +1,28 @@
+// Type mismatches in operations
+int main() {
+    int x = 5;
+    float y = 3.14;
+    boolean flag = true;
+    string msg = "hello";
+    
+    // Invalid arithmetic operations
+    int result1 = x + msg;        // int + string
+    float result2 = y * flag;     // float * boolean
+    boolean result3 = flag + x;   // boolean + int
+    
+    // Invalid comparisons
+    if (x > msg) {               // int > string
+        print(1);
+    }
+    
+    if (flag < y) {              // boolean < float
+        print(2);
+    }
+    
+    // Invalid assignments
+    x = msg;                     // int = string
+    flag = y;                    // boolean = float
+    msg = x + y;                 // string = arithmetic result
+    
+    return result1;
+}

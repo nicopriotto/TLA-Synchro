@@ -1,0 +1,16 @@
+// Extreme nesting with errors
+int main() {
+    if (true) {
+        while (true) {
+            for (int i = 0; i < 10; i++) {
+                if (i % 2 == 0) {
+                    while (i < 5) {
+                        for (int j = 0; j < i; j++) {
+                            if (j == 2) {
+                                forever {
+                                    if (true) {
+                                        // Missing closing braces from here
+                                        print(i + j);
+                                        return 0;
+                    // All the missing closing braces cause syntax errors
+}

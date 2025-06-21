@@ -1,0 +1,40 @@
+// Advanced threading and synchronization
+sem mutex = 1;
+int shared_counter = 0;
+int thread_count = 0;
+
+int worker_thread() {
+    down();
+    shared_counter++;
+    print(shared_counter);
+    sleep(1);
+    shared_counter--;
+    up();
+    return shared_counter;
+}
+
+int monitor_thread() {
+    forever {
+        if (shared_counter > 10) {
+            print(999);
+            return 0;
+        }
+        sleep(2);
+    }
+}
+
+int main() {
+    for (int i = 0; i < 5; i++) {
+        thread(worker_thread);
+        thread_count++;
+    }
+    
+    thread(monitor_thread);
+    
+    while (thread_count > 0) {
+        sleep(1);
+        thread_count--;
+    }
+    
+    return 0;
+}

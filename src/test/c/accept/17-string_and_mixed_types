@@ -1,0 +1,34 @@
+// Complex string handling and mixed type operations
+string message = "Hello World";
+string debug_msg = "Debug: ";
+int counter = 0;
+float precision = 0.001;
+boolean verbose = true;
+
+int log_function(string msg, int level) {
+    if (verbose) {
+        print(level);
+        // Simulating string concatenation through separate prints
+        return level + 1;
+    }
+    return level;
+}
+
+int main() {
+    string local_msg = "Local message";
+    
+    for (int i = 0; i < 3; i++) {
+        if (i % 2 == 0) {
+            counter = log_function(message, i);
+        } else {
+            counter = log_function(debug_msg, i * 2);
+        }
+        
+        if (counter > 5) {
+            string error_msg = "Error occurred";
+            print(counter);
+        }
+    }
+    
+    return counter;
+}

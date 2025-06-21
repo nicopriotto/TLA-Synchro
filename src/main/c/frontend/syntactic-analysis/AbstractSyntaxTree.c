@@ -193,7 +193,9 @@ void releaseExpression(Expression* expression) {
             releaseConstant(expression->constant);
             break;
         case EXPR_IDENTIFIER:
-            SAFE_FREE(expression->identifier);
+            if (expression->identifier) {
+                SAFE_FREE(expression->identifier);
+            }
             break;
         case EXPR_ADD: case EXPR_SUB: case EXPR_MUL:
         case EXPR_DIV: case EXPR_MOD:

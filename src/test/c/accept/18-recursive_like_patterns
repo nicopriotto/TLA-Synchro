@@ -1,0 +1,40 @@
+// Simulating recursive patterns with loops
+int factorial_iterative(int n) {
+    int result = 1;
+    int temp = n;
+    
+    while (temp > 1) {
+        result = result * temp;
+        temp--;
+    }
+    
+    return result;
+}
+
+int fibonacci_iterative(int n) {
+    if (n <= 1) {
+        return n;
+    }
+    
+    int prev = 0;
+    int curr = 1;
+    int next;
+    
+    for (int i = 2; i <= n; i++) {
+        next = prev + curr;
+        prev = curr;
+        curr = next;
+    }
+    
+    return curr;
+}
+
+int main() {
+    int fact5 = factorial_iterative(5);
+    int fib10 = fibonacci_iterative(10);
+    
+    print(fact5);
+    print(fib10);
+    
+    return fact5 + fib10;
+}

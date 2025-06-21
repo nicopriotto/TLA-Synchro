@@ -1,0 +1,25 @@
+// Invalid expression syntax
+int main() {
+    int x = 5;
+    int y = 10;
+    
+    // Invalid operator combinations
+    int result1 = x ++ y;        // Invalid: space in ++
+    int result2 = x + + y;       // Invalid: double +
+    int result3 = x * / y;       // Invalid: consecutive operators
+    
+    // Invalid parentheses
+    int result4 = (x + y;        // Missing closing parenthesis
+    int result5 = x + y);        // Missing opening parenthesis
+    int result6 = ((x + y);      // Unbalanced parentheses
+    
+    // Invalid increment/decrement
+    int result7 = ++(x + y);     // Can't increment expression
+    int result8 = (x++)++;       // Can't increment result of increment
+    
+    // Invalid assignment targets
+    (x + y) = 15;               // Can't assign to expression
+    5 = x;                      // Can't assign to literal
+    
+    return result1;
+}
