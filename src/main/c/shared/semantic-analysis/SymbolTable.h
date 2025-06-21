@@ -1,48 +1,57 @@
 #ifndef SYMBOL_TABLE_H
 #define SYMBOL_TABLE_H
-#include "../Type.h"
-#include <stddef.h>
-#include "../Logger.h"
 
+#include "../Logger.h"
+#include "../Type.h"
+
+// Forward declarations
+typedef struct SymbolEntry SymbolEntry;
+typedef struct SymbolTable SymbolTable;
+
+// Symbol types
 typedef enum {
     SYMBOL_INTEGER,
-    SYMBOL_STRING,
     SYMBOL_FLOAT,
+    SYMBOL_STRING,
     SYMBOL_BOOLEAN,
-    SYMBOL_SEMAPHORE,
-    SYMBOL_FUNCTION
+    SYMBOL_FUNCTION,
+    SYMBOL_SEMAPHORE
 } SymbolType;
 
-typedef struct SymbolEntry {
-    char *identifier;
+// Symbol data union
+typedef union {
+    int intValue;
+    float floatValue;
+    char* stringValue;
+    boolean boolValue;
+} SymbolData;
+
+// Symbol table entry
+struct SymbolEntry {
+    char* identifier;
     SymbolType type;
     int scope;
-    union {
-        int integerValue;
-        char *stringValue;
-        float floatValue;
-        boolean booleanValue;
-        int semaphoreValue;
-        SymbolType functionType;
-    } data;
-    struct SymbolEntry *next;
-} SymbolEntry;
+    SymbolData data;
+    SymbolEntry* next;
+};
 
-typedef struct {
-    SymbolEntry *head;
-} SymbolTable;
+// Symbol table structure
+struct SymbolTable {
+    SymbolEntry* head;
+    int size;
+};
 
+// Module functions
 void initializeSymbolTableModule();
 void shutdownSymbolTableModule();
 
-SymbolTable initializeSymbolTable();
-void initSymbolTable(SymbolTable *table);
-boolean insertSymbol(SymbolTable *table,const char *identifier,SymbolType type,int scope,const void *data);
-SymbolEntry *findSymbol(const SymbolTable *table,const char *identifier,int scope);
-boolean updateSymbolValue(SymbolTable *table,const char *identifier,int scope,const void *newData);
-boolean removeSymbol(SymbolTable *table,const char *identifier,int scope);
-void removeScopeSymbols(SymbolTable *table,int scope);
-void freeSymbolTable(SymbolTable *table);
-void dumpSymbolTable(const SymbolTable *table);
+// Symbol table functions
+void initSymbolTable(SymbolTable* table);
+boolean insertSymbol(SymbolTable* table, const char* identifier, SymbolType type, int scope, SymbolData* data);
+SymbolEntry* findSymbol(SymbolTable* table, const char* identifier, int scope);
+void removeScopeSymbols(SymbolTable* table, int scope);
+void removeScopesAbove(SymbolTable* table, int maxScope);
+void dumpSymbolTable(SymbolTable* table);
+void freeSymbolTable(SymbolTable* table);
 
 #endif

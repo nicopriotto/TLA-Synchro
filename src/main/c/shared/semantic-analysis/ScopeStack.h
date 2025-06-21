@@ -9,10 +9,13 @@ typedef struct {
     int nextScopeId;
 } ScopeStack;
 
-ScopeStack initScopeStack();
+void initScopeStack(ScopeStack *stack);
 void pushScope(ScopeStack *stack);
 void popScope(ScopeStack *stack, SymbolTable *st);
 int currentScope(const ScopeStack *stack);
 void freeScopeStack(ScopeStack *stack);
+
+// Helper function to check if we're in global scope
+int isGlobalScope(const ScopeStack *stack);
 
 #endif

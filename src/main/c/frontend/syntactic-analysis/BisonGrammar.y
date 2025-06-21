@@ -2,6 +2,11 @@
 
 #include "BisonActions.h"
 
+int yylex(void);
+void yyerror(const char * string);
+void enterBlockScope(void);
+void exitBlockScope(void);
+
 %}
 
 // You touch this, and you die.
@@ -173,14 +178,14 @@ program
     ;
 
 declarationList
-    : type IDENTIFIER declarationTail declarationList                                                   { $$ = DeclarationListSemanticAction($1, $2, $3, $4); }    
-    | type MAIN declarationTail                                                                         { $$ = DeclarationListSemanticAction($1, $2, $3, NULL); }
+    : type IDENTIFIER { registerDeclarationHeader($1, $2); } declarationTail declarationList           { $$ = DeclarationListSemanticAction($1, $2, $4, $5); }    
+    | type MAIN { registerDeclarationHeader($1, $2); } declarationTail                                 { $$ = DeclarationListSemanticAction($1, $2, $4, NULL); }
     | %empty                                                                                            { $$ = NULL; }
     ;
 
 declarationTail
     : ASSIGN constant SEMICOLON                                                                         { $$ = DeclarationSemanticAction($2); }
-    | LEFT_PARENTHESIS parameterList RIGHT_PARENTHESIS LEFT_BRACE statementList RIGHT_BRACE             { $$ = FunctionSemanticAction($2, $5); }
+    | LEFT_PARENTHESIS parameterList RIGHT_PARENTHESIS LEFT_BRACE { enterBlockScope(); } statementList RIGHT_BRACE { exitBlockScope(); }         { $$ = FunctionSemanticAction($2, $6); }
     ;
     
 parameterList
@@ -210,7 +215,7 @@ openStatement
 closedStatement
     : simpleStatement SEMICOLON                                                                                                                     { $$ = SimpleClosedStatementSemanticAction($1); }
     | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closedStatement ELSE closedStatement                                                          { $$ = IfElseClosedStatementSemanticAction($3, $5, $7); }
-    | LEFT_BRACE statementList RIGHT_BRACE                                                                                                          { $$ = ClosedListStatementSemanticAction($2);}
+    | LEFT_BRACE { enterBlockScope(); } statementList RIGHT_BRACE { exitBlockScope(); }                                                           { $$ = ClosedListStatementSemanticAction($3);}
     | WHILE LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closedStatement                                                                            { $$ = WhileClosedStatementSemanticAction($3, $5); }
     | FOR LEFT_PARENTHESIS forInitializer SEMICOLON conditionOptional SEMICOLON forUpdate RIGHT_PARENTHESIS closedStatement                         { $$ = ForClosedStatementSemanticAction($3, $5, $7, $9); }
     | FOREVER closedStatement                                                                                                                       { $$ = ForeverClosedStatementSemanticAction($2); }

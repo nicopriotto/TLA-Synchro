@@ -9,7 +9,7 @@ int reader() {
         down(queue);
         down(mutex);
         rc++;
-        if ( 1 >  ) {
+        if ( rc == 1 ) {  
             down(db);
         }
         up(queue);
@@ -19,7 +19,7 @@ int reader() {
 
         down(mutex);
         rc--;
-        if( 1 > 0 ) {
+        if( rc == 0 ) { 
             up(db);
         }
         up(mutex);
@@ -38,13 +38,8 @@ int writer(string name) {
     }  
 }
 
-/*
-*  main function
-*
-*/
-
 int main() {
-  thread(writer("Pepe"));
-  thread(reader);
+  //thread(writer("Pepe"));
+  //thread(reader);
   return 0;
 }

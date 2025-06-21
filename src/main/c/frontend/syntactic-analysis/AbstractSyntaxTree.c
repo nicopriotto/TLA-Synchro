@@ -26,7 +26,7 @@ static char* duplicateString(const char* str) {
     size_t len = strlen(str);
     char* result = (char*)calloc(len + 1, sizeof(char));
     if (!result) {
-        logError(_logger, "Memory allocation failed for string duplication");
+        if (_logger) logError(_logger, "Memory allocation failed for string duplication");
         return NULL;
     }
     strcpy(result, str);

@@ -1,67 +1,77 @@
-#ifndef BISON_ACTIONS_HEADER
-#define BISON_ACTIONS_HEADER
+#ifndef BISON_ACTIONS_H
+#define BISON_ACTIONS_H
 
 #include "../../shared/CompilerState.h"
 #include "../../shared/Logger.h"
 #include "../../shared/Type.h"
-#include "../../shared/semantic-analysis/TypeChecking.h"
-#include "../../shared/semantic-analysis/SymbolTable.h"
-#include "../../shared/semantic-analysis/ScopeStack.h"
 #include "AbstractSyntaxTree.h"
-#include "SyntacticAnalyzer.h"
-#include <stdlib.h>
 
-/** Initialize and teardown module state. */
-void initializeBisonActionsModule(void);
-void shutdownBisonActionsModule(void);
+/** Initialize module. */
+void initializeBisonActionsModule();
 
-/** Constants */
+/** Shutdown module. */
+void shutdownBisonActionsModule();
+
+/**
+ * This function is called when the parser encounters a declaration header
+ * (type + identifier) BEFORE parsing the declaration tail. This allows
+ * forward references to work properly.
+ */
+void registerDeclarationHeader(TypeNode* type, char* identifier);
+
+/* Scope management functions */
+void enterScope();
+void exitScope();
+
+/* Grammar-level scope management functions */
+void enterBlockScope();
+void exitBlockScope();
+
+/* Constant semantic actions. */
 Constant* IntegerConstantSemanticAction(const int value);
 Constant* FloatConstantSemanticAction(const float value);
 Constant* BooleanConstantSemanticAction(const boolean value);
 Constant* StringConstantSemanticAction(char* value);
 
-/** Expressions */
+/* Expression semantic actions. */
 Expression* ConstantExpressionSemanticAction(Constant* constant);
 Expression* IdentifierExpressionSemanticAction(char* identifier);
 Expression* BinaryExpressionSemanticAction(Expression* leftExpression, Expression* rightExpression, ExpressionType type);
 Expression* UnaryExpressionSemanticAction(Expression* subExpression, ExpressionType type);
 Expression* FunctionCallExpressionSemanticAction(char* functionName, ArgumentList* arguments);
 
-/** Conditions */
+/* Condition semantic actions. */
 Condition* RelationalConditionSemanticAction(Expression* leftValue, RelationalOperator* operator, Expression* rightValue);
 Condition* NotConditionSemanticAction(Condition* subCondition);
 Condition* LogicalConditionSemanticAction(Condition* leftCondition, Condition* rightCondition, int logicalType);
-Condition* EmptyConditionSemanticAction(void);
+Condition* EmptyConditionSemanticAction();
 Condition* ExpressionAsConditionSemanticAction(Expression* expression);
 
-/** Relational Operators */
-RelationalOperator* RelationalOperatorSemanticAction(RelationalOperatorType operatorType);
+/* Relational operator semantic actions. */
+RelationalOperator* RelationalOperatorSemanticAction(RelationalOperatorType type);
 
-/** Type nodes */
+/* Type node semantic actions. */
 TypeNode* TypeNodeSemanticAction(TypeNodeType type);
 
-/** Declarations */
+/* Declaration semantic actions. */
 DeclarationTail* DeclarationSemanticAction(Constant* value);
 DeclarationList* DeclarationListSemanticAction(TypeNode* type, char* identifier, DeclarationTail* declarationTail, DeclarationList* next);
 
-/** Variable Declarations */
-VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, char* identifier, Condition* value);
+/* Variable declaration semantic actions. */
+VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, char* identifier, Condition* condition);
 
-
-
-/** Function identifiers */
+/* Function identifier semantic actions. */
 FunctionIdentifier* FunctionIdentifierSemanticAction(FunctionIdentifierType type, char* identifier);
 
-/** Parameter & argument lists */
+/* Parameter and argument semantic actions. */
 ParameterList* ParameterListSemanticAction(TypeNode* type, char* identifier, ParameterList* nextParameters);
 ArgumentList* ArgumentListSemanticAction(Expression* expression, ArgumentList* nextArguments);
 
-/** For‐loop components */
+/* For loop semantic actions. */
 ForInitializer* ForInitializerSemanticAction(VariableDeclaration* declaration, ForInitializer* nextInitializers);
 ForUpdate* ForUpdateSemanticAction(SimpleStatement* statement, ForUpdate* nextUpdates);
 
-/** Simple statements */
+/* Simple statement semantic actions. */
 SimpleStatement* FunctionCallSimpleStatementSemanticAction(FunctionIdentifier* function, ArgumentList* arguments);
 SimpleStatement* IncrementSimpleStatementSemanticAction(char* identifier, boolean isPrefix);
 SimpleStatement* DecrementSimpleStatementSemanticAction(char* identifier, boolean isPrefix);
@@ -70,31 +80,31 @@ SimpleStatement* DeclarationSimpleStatementSemanticAction(VariableDeclaration* d
 SimpleStatement* ReturnConstantSimpleStatementSemanticAction(Constant* constant);
 SimpleStatement* ReturnIdentifierSimpleStatementSemanticAction(char* identifier);
 
-/** Open statements (`if`, `while`, `for`, `forever`) */
+/* Open statement semantic actions. */
 OpenStatement* IfOpenStatementSemanticAction(Condition* condition, Statement* thenStatement);
 OpenStatement* IfElseOpenStatementSemanticAction(Condition* condition, Statement* thenStatement, OpenStatement* elseStatement);
 OpenStatement* WhileOpenStatementSemanticAction(Condition* condition, OpenStatement* body);
 OpenStatement* ForOpenStatementSemanticAction(ForInitializer* initializer, Condition* condition, ForUpdate* update, OpenStatement* body);
 
-/** Closed statements (terminated by newline or explicit block) */
-ClosedStatement* SimpleClosedStatementSemanticAction(SimpleStatement* simple);
+/* Closed statement semantic actions. */
+ClosedStatement* SimpleClosedStatementSemanticAction(SimpleStatement* simpleStatement);
 ClosedStatement* ClosedListStatementSemanticAction(StatementList* statementList);
-ClosedStatement* IfElseClosedStatementSemanticAction(Condition* condition, ClosedStatement* thenStmt, ClosedStatement* elseStmt);
-ClosedStatement* IfElseBracesClosedStatementSemanticAction(Condition* condition, ClosedStatement* thenStmt, StatementList* elseStmt);
-ClosedStatement* IfBlockClosedStatementSemanticAction(Condition* condition, StatementList* body);
-ClosedStatement* IfElseBlockClosedStatementSemanticAction(Condition* condition, StatementList* body, StatementList* elseBody);
+ClosedStatement* IfElseClosedStatementSemanticAction(Condition* condition, ClosedStatement* thenStatement, ClosedStatement* elseStatement);
 ClosedStatement* WhileClosedStatementSemanticAction(Condition* condition, ClosedStatement* body);
 ClosedStatement* ForClosedStatementSemanticAction(ForInitializer* initializer, Condition* condition, ForUpdate* update, ClosedStatement* body);
 ClosedStatement* ForeverClosedStatementSemanticAction(ClosedStatement* body);
 
-/** General statements & statement lists */
-Statement* OpenStatementSemanticAction(OpenStatement* openStmt);
-Statement* ClosedStatementSemanticAction(ClosedStatement* closedStmt);
-StatementList* StatementListSemanticAction(Statement* stmt, StatementList* nextStatements);
+/* Statement semantic actions. */
+Statement* OpenStatementSemanticAction(OpenStatement* openStatement);
+Statement* ClosedStatementSemanticAction(ClosedStatement* closedStatement);
+StatementList* StatementListSemanticAction(Statement* statement, StatementList* nextStatements);
 
-/** Functions & program */ 
+/* Function semantic actions. */
 DeclarationTail* FunctionSemanticAction(ParameterList* parameters, StatementList* body);
 FunctionList* FunctionListSemanticAction(Function* function, FunctionList* nextFunctions);
-Program* ProgramSemanticAction(DeclarationList* globalDeclarations, CompilerState* compilerState);
 
-#endif /* BISON_ACTIONS_HEADER */
+/* Program semantic action. */
+Program* ProgramSemanticAction(DeclarationList* globalDeclarations, CompilerState* compilerState);
+void updateSymbolToFunction(const char* identifier);
+
+#endif

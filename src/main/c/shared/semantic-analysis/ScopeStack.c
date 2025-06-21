@@ -1,8 +1,10 @@
 #include "ScopeStack.h"
+#include "SymbolTable.h"
 #include <stdlib.h>
 #include <stdio.h>
 
 #define INITIAL_CAP 20
+#define GLOBAL_SCOPE_ID 0  // Use 0 for global scope instead of -1
 
 static void ensureCapacity(ScopeStack *stk) {
     if (stk->size == stk->capacity) {
@@ -15,8 +17,7 @@ static void ensureCapacity(ScopeStack *stk) {
     }
 }
 
-ScopeStack initScopeStack() {
-    ScopeStack* stk = calloc(sizeof(ScopeStack), 1);
+void initScopeStack(ScopeStack *stk) {
     stk->levels = malloc(sizeof(int) * INITIAL_CAP);
     if (!stk->levels) {
         fprintf(stderr, "OOM\n");
@@ -24,28 +25,36 @@ ScopeStack initScopeStack() {
     }    
     stk->size = 0;
     stk->capacity = INITIAL_CAP;
-    stk->nextScopeId = 1;
-    return *stk;
+    stk->nextScopeId = 1;  // Start from 1, 0 is reserved for global
 }
 
 void pushScope(ScopeStack *stk) {
+    if (!stk || !stk->levels) return;
     ensureCapacity(stk);
     stk->levels[stk->size++] = stk->nextScopeId++;
 }
 
 void popScope(ScopeStack *stk, SymbolTable *st) {
-    if (stk->size == 0) return;
+    if (!stk || stk->size == 0) return;
     int scopeId = stk->levels[--stk->size];
-    removeScopeSymbols(st, scopeId);
+    //removeScopeSymbols(st, scopeId);
 }
 
 int currentScope(const ScopeStack *stk) {
-    return stk->size == 0 ? -1 : stk->levels[stk->size - 1];
+    if (!stk || stk->size == 0) return GLOBAL_SCOPE_ID;  // Return 0 for global scope
+    return stk->levels[stk->size - 1];
+}
+
+int isGlobalScope(const ScopeStack *stack) {
+    return currentScope(stack) == GLOBAL_SCOPE_ID;
 }
 
 void freeScopeStack(ScopeStack *stk) {
-    free(stk->levels);
-    stk->levels = NULL;
+    if (!stk) return;
+    if (stk->levels) {
+        free(stk->levels);
+        stk->levels = NULL;
+    }
     stk->size = stk->capacity = 0;
     stk->nextScopeId = 1;
 }

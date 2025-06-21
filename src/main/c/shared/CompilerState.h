@@ -1,34 +1,25 @@
-#ifndef COMPILER_STATE_HEADER
-#define COMPILER_STATE_HEADER
+#ifndef COMPILER_STATE_H
+#define COMPILER_STATE_H
 
-#include "Type.h"
 #include "semantic-analysis/SymbolTable.h"
 #include "semantic-analysis/ScopeStack.h"
+#include "Type.h"
 
-/**
- * The general status of a compilation.
-*/
+// Compilation status enum - CRITICAL: SUCCEED must be 0, FAILED must be non-zero
 typedef enum {
-	SUCCEED = 0,
-	FAILED = 1
+    SUCCEED = 0,    // Success (Unix convention)
+    FAILED = 1      // Failure (Unix convention)
 } CompilationStatus;
 
-/**
- * The global state of the compiler. Should transport every data structure
- * needed across the different phases of a compilation.
- */
 typedef struct {
-	// The root node of the AST.
-	void * abstractSyntaxtTree;
-
-	// A flag that indicates the current state of the compilation so far.
-	boolean succeed;
-
-	SymbolTable symbolTable;
-	ScopeStack scopeStack;
-
-	// The computed value of the entire program (only for the calculator).
-	int value;
+    void* abstractSyntaxtTree;
+    boolean succeed;
+    SymbolTable symbolTable;
+    ScopeStack scopeStack;
+    int value;
 } CompilerState;
+
+// Global state access function
+CompilerState* currentCompilerState(void);
 
 #endif

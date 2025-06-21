@@ -1,34 +1,44 @@
 #ifndef TYPE_CHECKING_HEADER
 #define TYPE_CHECKING_HEADER
 
-#include "../../frontend/syntactic-analysis/AbstractSyntaxTree.h"
-#include "SymbolTable.h"
-#include "../../frontend/syntactic-analysis/SyntacticAnalyzer.h"
-
 #include "../Logger.h"
-#include "../CompilerState.h"
+#include "../Type.h"
+#include "../../frontend/syntactic-analysis/AbstractSyntaxTree.h"
 
+/** Initialize module's internal state. */
 void initializeTypeCheckingModule();
+
+/** Shutdown module's internal state. */
 void shutdownTypeCheckingModule();
 
-unsigned int CheckTypeProgram(Program *program);
-unsigned int CheckTypeStatement(Statement *statement);
-unsigned int CheckTypeStatementList(StatementList *statementList);
-unsigned int CheckTypeExpression(Expression *expression);
-unsigned int CheckTypeCondition(Condition *condition);
-unsigned int CheckTypeArgumentList(ArgumentList *argumentList);
-unsigned int CheckTypeDeclarationList(DeclarationList *declarationList);
-unsigned int CheckTypeTypeNode(TypeNode *typeNode);
-unsigned int CheckTypeConstant(Constant *constant);
-unsigned int CheckTypeOpenStatement(OpenStatement *openStatement);
-unsigned int CheckTypeClosedStatement(ClosedStatement *closedStatement);
-unsigned int CheckTypeSimpleStatement(SimpleStatement *simpleStatement);
-unsigned int CheckTypeFunctionIdentifier(FunctionIdentifier *functionIdentifier);
-unsigned int CheckTypeForInitializer(ForInitializer *forInitializer);
-unsigned int CheckTypeForUpdate(ForUpdate *forUpdate);
-unsigned int CheckTypeVariableDeclaration(VariableDeclaration *variableDeclaration);
-unsigned int CheckTypeRelationalOperator(RelationalOperator *relationalOperator);
-unsigned int CheckTypeDeclarationTail(DeclarationTail *declarationTail);
-unsigned int CheckTypeParameterList(ParameterList *parameterList);
+/* IMMEDIATE TYPE CHECKING FUNCTIONS */
+boolean CheckTypeImmediate_Constant(Constant* constant);
+boolean CheckTypeImmediate_Expression(Expression* expr);
+boolean CheckTypeImmediate_Condition(Condition* condition);
+boolean CheckTypeImmediate_Assignment(const char* identifier, Expression* expr);
+boolean CheckTypeImmediate_VariableDeclaration(TypeNode* type, const char* identifier, Condition* initCondition);
+boolean CheckTypeImmediate_FunctionCall(const char* functionName, ArgumentList* arguments);
+boolean CheckTypeImmediate_IncrementDecrement(const char* identifier);
+
+/* LEGACY COMPATIBILITY FUNCTIONS */
+unsigned int CheckTypeConstant(Constant *c);
+unsigned int CheckTypeTypeNode(TypeNode *t);
+unsigned int CheckTypeRelationalOperator(RelationalOperator *r);
+unsigned int CheckTypeExpression(Expression *e);
+unsigned int CheckTypeCondition(Condition *c);
+unsigned int CheckTypeArgumentList(ArgumentList *a);
+unsigned int CheckTypeFunctionIdentifier(FunctionIdentifier *f);
+unsigned int CheckTypeVariableDeclaration(VariableDeclaration *v);
+unsigned int CheckTypeForInitializer(ForInitializer *fi);
+unsigned int CheckTypeForUpdate(ForUpdate *fu);
+unsigned int CheckTypeSimpleStatement(SimpleStatement *s);
+unsigned int CheckTypeClosedStatement(ClosedStatement *c);
+unsigned int CheckTypeOpenStatement(OpenStatement *o);
+unsigned int CheckTypeStatement(Statement *s);
+unsigned int CheckTypeStatementList(StatementList *sl);
+unsigned int CheckTypeParameterList(ParameterList *pl);
+unsigned int CheckTypeDeclarationTail(DeclarationTail *dt);
+unsigned int CheckTypeDeclarationList(DeclarationList *dl);
+unsigned int CheckTypeProgram(Program *p);
 
 #endif
