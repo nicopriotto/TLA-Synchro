@@ -2,7 +2,7 @@
 int factorial_iterative(int n) {
     int result = 1;
     int temp = n;
-    
+
     while (temp > 1) {
         result = result * temp;
         temp--;
@@ -18,7 +18,7 @@ int fibonacci_iterative(int n) {
     
     int prev = 0;
     int curr = 1;
-    int next;
+    int next = 0;
     
     for (int i = 2; i <= n; i++) {
         next = prev + curr;
@@ -26,7 +26,7 @@ int fibonacci_iterative(int n) {
         curr = next;
     }
     
-    return curr;
+    return 0;
 }
 
 int main() {
@@ -36,5 +36,6 @@ int main() {
     print(fact5);
     print(fib10);
     
-    return fact5 + fib10;
+    int fact = fact5 + fib10;
+    return 0;
 }

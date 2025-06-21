@@ -9,7 +9,8 @@ int log_function(string msg, int level) {
     if (verbose) {
         print(level);
         // Simulating string concatenation through separate prints
-        return level + 1;
+        int newLevel = level + 1;
+        return newLevel;
     }
     return level;
 }

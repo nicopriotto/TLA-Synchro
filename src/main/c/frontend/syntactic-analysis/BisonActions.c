@@ -3,6 +3,8 @@
 
 /* MODULE INTERNAL STATE */
 static Logger* _logger = NULL;
+static char* _currentFunctionIdentifier = NULL;  // Track current function being parsed
+static char* _currentFunctionName = NULL; // Track the function being parsed
 
 void initializeBisonActionsModule() {
     _logger = createLogger("BisonActions");
@@ -12,6 +14,14 @@ void shutdownBisonActionsModule() {
     if (_logger != NULL) {
         destroyLogger(_logger);
         _logger = NULL;
+    }
+    if (_currentFunctionIdentifier) {
+        free(_currentFunctionIdentifier);
+        _currentFunctionIdentifier = NULL;
+    }
+    if (_currentFunctionName != NULL) {
+        free(_currentFunctionName);
+        _currentFunctionName = NULL;
     }
 }
 
@@ -25,6 +35,7 @@ static boolean isCompatibleType(SymbolType expected, SymbolType actual);
 static void preRegisterAllFunctions(DeclarationList* declarations);
 static void preRegisterFunction(TypeNode* type, char* identifier, DeclarationTail* declarationTail);
 static char* _getBuiltinFunctionIdentifier(FunctionIdentifierType type);
+static void updateSymbolToFunction(const char* identifier);
 
 /**
  * Logs a syntactic-analyzer action in DEBUGGING level.
@@ -125,6 +136,23 @@ static void preRegisterFunction(TypeNode* type, char* identifier, DeclarationTai
 }
 
 /**
+ * Updates a symbol from variable type to function type
+ * Called when we determine that a declared symbol is actually a function
+ */
+static void updateSymbolToFunction(const char* identifier) {
+    if (!identifier) return;
+    
+    CompilerState* state = currentCompilerState();
+    if (!state) return;
+    
+    SymbolEntry* entry = findSymbol(&state->symbolTable, identifier, 0);
+    if (entry && entry->scope == 0 && entry->type != SYMBOL_FUNCTION) {
+        entry->type = SYMBOL_FUNCTION;
+        logDebugging(_logger, "Updated symbol %s to function type (was type %d)", identifier, entry->type);
+    }
+}
+
+/**
  * Immediately registers a symbol when we encounter the declaration header
  * (type + identifier) BEFORE parsing the declaration body. This enables
  * forward references to work properly in bottom-up parsing.
@@ -136,6 +164,12 @@ void registerDeclarationHeader(TypeNode* type, char* identifier) {
         logError(_logger, "Cannot register declaration header with NULL components");
         return;
     }
+    
+    // **FIX**: Store the current identifier for potential function type update
+    if (_currentFunctionIdentifier) {
+        free(_currentFunctionIdentifier);
+    }
+    _currentFunctionIdentifier = strdup(identifier);
     
     CompilerState* state = currentCompilerState();
     if (!state) {
@@ -686,6 +720,19 @@ ParameterList* ParameterListSemanticAction(TypeNode* type, char* identifier, Par
     if (!type || !identifier) {
         logError(_logger, "Cannot create parameter list with NULL type or identifier");
         return NULL;
+    }
+    
+    // **FIX**: If this is the first parameter and we have a current function identifier,
+    // update that symbol to be a function type
+    if (!nextParameters && _currentFunctionIdentifier) {
+        CompilerState* state = currentCompilerState();
+        if (state) {
+            SymbolEntry* funcEntry = findSymbol(&state->symbolTable, _currentFunctionIdentifier, 0);
+            if (funcEntry && funcEntry->scope == 0) {
+                funcEntry->type = SYMBOL_FUNCTION;
+                logDebugging(_logger, "Updated %s to function type during parameter parsing", _currentFunctionIdentifier);
+            }
+        }
     }
     
     // **FIX**: Register parameter immediately in current scope
@@ -1445,4 +1492,20 @@ Program* ProgramSemanticAction(DeclarationList* globalDeclarations, CompilerStat
     }
     
     return program;
+}
+
+void setCurrentFunctionName(char* functionName) {
+    if (_currentFunctionName != NULL) {
+        free(_currentFunctionName);
+    }
+    _currentFunctionName = strdup(functionName);
+    logDebugging(_logger, "Set current function name to: %s", _currentFunctionName);
+}
+
+void clearCurrentFunctionName() {
+    if (_currentFunctionName != NULL) {
+        free(_currentFunctionName);
+        _currentFunctionName = NULL;
+    }
+    logDebugging(_logger, "Cleared current function name");
 }

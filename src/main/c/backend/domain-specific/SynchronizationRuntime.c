@@ -166,11 +166,11 @@ void generateBuiltinFunctionDeclarations(FILE* output) {
     fprintf(output, "// Built-in function declarations\n");
     fprintf(output, "void _synchro_runtime_init();\n");
     fprintf(output, "void _synchro_runtime_cleanup();\n");
-    fprintf(output, "void _synchro_print(int value);\n");
+    fprintf(output, "void _synchro_print(char* value);\n");
     fprintf(output, "void _synchro_sleep(int seconds);\n");
-    fprintf(output, "void _synchro_up();\n");
-    fprintf(output, "void _synchro_down();\n");
-    fprintf(output, "void* _synchro_thread(void* (*func)(void*), void* arg);\n\n");
+    fprintf(output, "void _synchro_up(pthread_mutex_t* mutex);\n");
+    fprintf(output, "void _synchro_down(pthread_mutex_t* mutex);\n");
+    fprintf(output, "void* _synchro_thread(void* (*func)(void*), int thread_count);\n\n");
 }
 
 void generateThreadSupport(FILE* output) {
@@ -207,9 +207,9 @@ void generateBuiltinFunctionImplementations(FILE* output) {
     fprintf(output, "    }\n");
     fprintf(output, "}\n\n");
     
-    fprintf(output, "void _synchro_print(int value) {\n");
+    fprintf(output, "void _synchro_print(char* value) {\n");
     fprintf(output, "    pthread_mutex_lock(&sync_mutex);\n");
-    fprintf(output, "    printf(\"[PRINT] %%d\\n\", value);\n");
+    fprintf(output, "    printf(\"[PRINT] %%s\\n\", value);\n");
     fprintf(output, "    fflush(stdout);\n");
     fprintf(output, "    pthread_mutex_unlock(&sync_mutex);\n");
     fprintf(output, "}\n\n");
@@ -220,38 +220,38 @@ void generateBuiltinFunctionImplementations(FILE* output) {
     fprintf(output, "    printf(\"[SLEEP] Woke up after %%d seconds\\n\", seconds);\n");
     fprintf(output, "}\n\n");
     
-    fprintf(output, "void _synchro_up() {\n");
+    fprintf(output, "void _synchro_up(pthread_mutex_t* mutex) {\n");
     fprintf(output, "    printf(\"[UP] Releasing mutex\\n\");\n");
-    fprintf(output, "    pthread_mutex_unlock(&sync_mutex);\n");
+    fprintf(output, "    pthread_mutex_unlock(mutex);\n");
     fprintf(output, "}\n\n");
     
-    fprintf(output, "void _synchro_down() {\n");
+    fprintf(output, "void _synchro_down(pthread_mutex_t* mutex) {\n");
     fprintf(output, "    printf(\"[DOWN] Acquiring mutex\\n\");\n");
-    fprintf(output, "    pthread_mutex_lock(&sync_mutex);\n");
+    fprintf(output, "    pthread_mutex_lock(mutex);\n");
     fprintf(output, "    printf(\"[DOWN] Mutex acquired\\n\");\n");
     fprintf(output, "}\n\n");
     
-    fprintf(output, "void* _synchro_thread(void* (*func)(void*), void* arg) {\n");
-    fprintf(output, "    pthread_t thread;\n");
-    fprintf(output, "    thread_args_t* args = malloc(sizeof(thread_args_t));\n");
-    fprintf(output, "    if (args == NULL) {\n");
-    fprintf(output, "        printf(\"[ERROR] Failed to allocate memory for thread args\\n\");\n");
+    fprintf(output, "void* _synchro_thread(void* (*func)(void*), int thread_count) {\n");
+    fprintf(output, "    pthread_t* threads = malloc(thread_count * sizeof(pthread_t));\n");
+    fprintf(output, "    if (threads == NULL) {\n");
+    fprintf(output, "        printf(\"[ERROR] Failed to allocate memory for threads\\n\");\n");
     fprintf(output, "        return NULL;\n");
     fprintf(output, "    }\n");
     fprintf(output, "    \n");
-    fprintf(output, "    args->func = func;\n");
-    fprintf(output, "    args->arg = arg;\n");
+    fprintf(output, "    printf(\"[THREAD] Creating %%d threads\\n\", thread_count);\n");
     fprintf(output, "    \n");
-    fprintf(output, "    printf(\"[THREAD] Creating new thread\\n\");\n");
-    fprintf(output, "    if (pthread_create(&thread, NULL, thread_wrapper, args) != 0) {\n");
-    fprintf(output, "        printf(\"[ERROR] Failed to create thread\\n\");\n");
-    fprintf(output, "        free(args);\n");
-    fprintf(output, "        return NULL;\n");
+    fprintf(output, "    for (int i = 0; i < thread_count; i++) {\n");
+    fprintf(output, "        if (pthread_create(&threads[i], NULL, func, NULL) != 0) {\n");
+    fprintf(output, "            printf(\"[ERROR] Failed to create thread %%d\\n\", i);\n");
+    fprintf(output, "            free(threads);\n");
+    fprintf(output, "            return NULL;\n");
+    fprintf(output, "        }\n");
+    fprintf(output, "        pthread_detach(threads[i]);\n");
+    fprintf(output, "        printf(\"[THREAD] Thread %%d created and detached\\n\", i);\n");
     fprintf(output, "    }\n");
     fprintf(output, "    \n");
-    fprintf(output, "    pthread_detach(thread);\n");
-    fprintf(output, "    printf(\"[THREAD] Thread created and detached\\n\");\n");
-    fprintf(output, "    return (void*)(intptr_t)1; // Success indicator\n");
+    fprintf(output, "    free(threads);\n");
+    fprintf(output, "    return (void*)(intptr_t)thread_count; // Return number of threads created\n");
     fprintf(output, "}\n\n");
 }
 

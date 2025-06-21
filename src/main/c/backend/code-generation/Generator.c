@@ -43,6 +43,8 @@ static void _generateCondition(Condition * condition);
 static void _generateExpression(Expression * expr);
 static void _generateArgumentList(ArgumentList * argList);
 static void _generateRelationalOperator(RelationalOperator * relOp);
+static void _generateForInitializer(ForInitializer * forInit);
+static void _generateForUpdate(ForUpdate * forUpdate);
 static char * _indentation(const unsigned int level);
 static void _output(const unsigned int indentationLevel, const char * const format, ...);
 static const char* _getTypeName(TypeNode* type);
@@ -207,27 +209,33 @@ static void _generateDeclaration(TypeNode* type, char* identifier, DeclarationTa
  * Generates a variable declaration with initialization
  */
 static void _generateVariableDeclaration(TypeNode* type, char* identifier, Constant* constant) {
-    _output(0, "%s %s", _getTypeName(type), identifier);
-    
-    if (constant != NULL) {
-        _output(0, " = ");
-        switch (constant->type) {
-            case CONST_INTEGER:
-                _output(0, "%d", constant->integer);
-                break;
-            case CONST_FLOAT:
-                _output(0, "%f", constant->floatVal);
-                break;
-            case CONST_BOOLEAN:
-                _output(0, "%s", constant->boolean ? "true" : "false");
-                break;
-            case CONST_STRING:
-                _output(0, "\"%s\"", constant->string);
-                break;
+    if (type->type == TYPE_SEM) {
+        // Special handling for semaphores - create and initialize a mutex
+        _output(0, "pthread_mutex_t %s_mutex = PTHREAD_MUTEX_INITIALIZER;\n", identifier);
+        _output(0, "pthread_mutex_t* %s = &%s_mutex;\n", identifier, identifier);
+    } else {
+        _output(0, "%s %s", _getTypeName(type), identifier);
+        
+        if (constant != NULL) {
+            _output(0, " = ");
+            switch (constant->type) {
+                case CONST_INTEGER:
+                    _output(0, "%d", constant->integer);
+                    break;
+                case CONST_FLOAT:
+                    _output(0, "%f", constant->floatVal);
+                    break;
+                case CONST_BOOLEAN:
+                    _output(0, "%s", constant->boolean ? "true" : "false");
+                    break;
+                case CONST_STRING:
+                    _output(0, "\"%s\"", constant->string);
+                    break;
+            }
         }
+        
+        _output(0, ";\n");
     }
-    
-    _output(0, ";\n");
 }
 
 /**
@@ -238,14 +246,17 @@ static void _generateFunctionDeclaration(TypeNode* type, char* identifier, Param
     const char* functionName = identifier;
     if (identifier != NULL && strcmp(identifier, "main") == 0) {
         functionName = "_userMain";
+        // Main function still returns void* for thread compatibility
+        _output(0, "void* %s(", functionName);
+    } else {
+        // User-defined functions should be thread-compatible (void* func(void*))
+        _output(0, "void* %s(", functionName);
     }
-    
-    // Generate function signature - all user functions return void* for thread compatibility
-    _output(0, "void* %s(", functionName);
     
     if (parameterList != NULL) {
         _generateParameterList(parameterList);
     } else {
+        // All functions need void* parameter for thread compatibility
         _output(0, "void* unused");
     }
     
@@ -256,7 +267,8 @@ static void _generateFunctionDeclaration(TypeNode* type, char* identifier, Param
         _generateStatementList(statementList);
     }
     
-    _output(1, "return NULL;\n"); // Ensure NULL return
+    // Add NULL return for thread compatibility
+    _output(1, "return NULL;\n");
     _output(0, "}\n\n");
 }
 
@@ -288,6 +300,72 @@ static void _generateStatementList(StatementList * stmtList) {
     // Generate remaining statements
     if (stmtList->next != NULL) {
         _generateStatementList(stmtList->next);
+    }
+}
+
+/**
+ * Generates for loop initializer
+ */
+static void _generateForInitializer(ForInitializer * forInit) {
+    if (forInit == NULL) return;
+    
+    // Generate current initializer
+    if (forInit->declaration) {
+        _output(0, "%s %s", _getTypeName(forInit->declaration->type), 
+            forInit->declaration->identifier);
+        
+        // Handle initialization from condition (which contains the expression)
+        if (forInit->declaration->condition && 
+            forInit->declaration->condition->type == COND_EXPRESSION) {
+            _output(0, " = ");
+            _generateExpression(forInit->declaration->condition->expression.expression);
+        }
+    }
+    
+    // Generate remaining initializers
+    if (forInit->next != NULL) {
+        _output(0, ", ");
+        _generateForInitializer(forInit->next);
+    }
+}
+
+/**
+ * Generates for loop update
+ */
+static void _generateForUpdate(ForUpdate * forUpdate) {
+    if (forUpdate == NULL) return;
+    
+    // Generate current update
+    if (forUpdate->statement) {
+        switch (forUpdate->statement->type) {
+            case SIMPLE_INCREMENT:
+                if (forUpdate->statement->increment.isPrefix) {
+                    _output(0, "++%s", forUpdate->statement->increment.identifier);
+                } else {
+                    _output(0, "%s++", forUpdate->statement->increment.identifier);
+                }
+                break;
+            case SIMPLE_DECREMENT:
+                if (forUpdate->statement->decrement.isPrefix) {
+                    _output(0, "--%s", forUpdate->statement->decrement.identifier);
+                } else {
+                    _output(0, "%s--", forUpdate->statement->decrement.identifier);
+                }
+                break;
+            case SIMPLE_ASSIGNMENT:
+                _output(0, "%s = ", forUpdate->statement->assignment.identifier);
+                _generateExpression(forUpdate->statement->assignment.expression);
+                break;
+            default:
+                // Handle other statement types if needed
+                break;
+        }
+    }
+    
+    // Generate remaining updates
+    if (forUpdate->next != NULL) {
+        _output(0, ", ");
+        _generateForUpdate(forUpdate->next);
     }
 }
 
@@ -326,11 +404,24 @@ static void _generateStatement(Statement * stmt) {
             break;
         case STMT_FOR:
             _output(1, "for (");
-            // TODO: Handle ForInitializer properly
+            
+            // Generate initializer
+            if (stmt->forStatement.initializer != NULL) {
+                _generateForInitializer(stmt->forStatement.initializer);
+            }
             _output(0, "; ");
-            _generateCondition(stmt->forStatement.condition);
+            
+            // Generate condition
+            if (stmt->forStatement.condition != NULL) {
+                _generateCondition(stmt->forStatement.condition);
+            }
             _output(0, "; ");
-            // TODO: Handle ForUpdate properly
+            
+            // Generate update
+            if (stmt->forStatement.update != NULL) {
+                _generateForUpdate(stmt->forStatement.update);
+            }
+            
             _output(0, ") {\n");
             _generateStatement(stmt->forStatement.body);
             _output(1, "}\n");
@@ -383,30 +474,46 @@ static void _generateSimpleStatement(SimpleStatement * simpleStmt) {
             _generateExpression(simpleStmt->assignment.expression);
             _output(0, ";\n");
             break;
-        case SIMPLE_DECLARATION:
-            _output(1, "%s %s;\n", _getTypeName(simpleStmt->declaration->type), 
-                simpleStmt->declaration->identifier);
+        case SIMPLE_DECLARATION: {
+            if (simpleStmt->declaration) {
+                _output(1, "%s %s", _getTypeName(simpleStmt->declaration->type), 
+                    simpleStmt->declaration->identifier);
+                
+                // Handle initialization from condition (which contains the expression)
+                if (simpleStmt->declaration->condition && 
+                    simpleStmt->declaration->condition->type == COND_EXPRESSION) {
+                    _output(0, " = ");
+                    
+                    // No casting needed since functions now return their proper types
+                    _generateExpression(simpleStmt->declaration->condition->expression.expression);
+                }
+                
+                _output(0, ";\n");
+            } else {
+                _output(1, "/* NULL declaration */;\n");
+            }
             break;
+        }
         case RETURN_CONSTANT:
-            _output(1, "return (void*)(intptr_t)");
+            _output(1, "return ");
             switch (simpleStmt->constant->type) {
                 case CONST_INTEGER:
                     _output(0, "%d", simpleStmt->constant->integer);
                     break;
                 case CONST_FLOAT:
-                    _output(0, "(int)%f", simpleStmt->constant->floatVal);
+                    _output(0, "%f", simpleStmt->constant->floatVal);
                     break;
                 case CONST_BOOLEAN:
-                    _output(0, "%s", simpleStmt->constant->boolean ? "1" : "0");
+                    _output(0, "%s", simpleStmt->constant->boolean ? "true" : "false");
                     break;
                 case CONST_STRING:
-                    _output(0, "0"); // String returns can't be converted to void* easily
+                    _output(0, "\"%s\"", simpleStmt->constant->string);
                     break;
             }
             _output(0, ";\n");
             break;
         case RETURN_IDENTIFIER:
-            _output(1, "return (void*)(intptr_t)%s;\n", simpleStmt->identifier);
+            _output(1, "return %s;\n", simpleStmt->identifier);
             break;
     }
 }
@@ -548,7 +655,16 @@ static void _generateExpression(Expression * expr) {
             break;
         case EXPR_FUNCTION_CALL:
             if (expr->functionCall.functionName != NULL) {
-                _output(0, "%s(", _getBuiltinFunctionName(expr->functionCall.functionName));
+                // Check if it's a user-defined function (not built-in)
+                const char* builtinName = _getBuiltinFunctionName(expr->functionCall.functionName);
+                if (strcmp(builtinName, expr->functionCall.functionName) == 0) {
+                    // User-defined function - call it directly
+                    _output(0, "%s(", expr->functionCall.functionName);
+                } else {
+                    // Built-in function - use the mapped name
+                    _output(0, "%s(", builtinName);
+                }
+                
                 if (expr->functionCall.arguments != NULL) {
                     _generateArgumentList(expr->functionCall.arguments);
                 }

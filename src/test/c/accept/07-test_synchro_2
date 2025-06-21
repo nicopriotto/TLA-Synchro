@@ -20,5 +20,8 @@ int main() {
     int a = 0;
     thread(A, 2);   
     thread(B, 5);
+    forever {
+
+    }
     return 0;
 }

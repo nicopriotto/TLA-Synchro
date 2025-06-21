@@ -105,6 +105,6 @@ FunctionList* FunctionListSemanticAction(Function* function, FunctionList* nextF
 
 /* Program semantic action. */
 Program* ProgramSemanticAction(DeclarationList* globalDeclarations, CompilerState* compilerState);
-void updateSymbolToFunction(const char* identifier);
+static void updateSymbolToFunction(const char* identifier);
 
 #endif

@@ -40,7 +40,8 @@ int writer(string name) {
 
 int main() {
     reader(queue);
-//   thread(writer("Pepe"));
+    int wr = writer("pepinoso");
+    //   thread(writer("Pepe"));
 //   thread(reader);
   return 0;
 }
