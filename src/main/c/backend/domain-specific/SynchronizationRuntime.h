@@ -6,6 +6,7 @@
 #include "../../frontend/syntactic-analysis/AbstractSyntaxTree.h"
 #include <stdio.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include <stdbool.h>
 
 typedef struct {

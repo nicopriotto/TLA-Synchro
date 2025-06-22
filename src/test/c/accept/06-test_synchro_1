@@ -16,6 +16,7 @@ int reader() {
         up(mutex);
 
         print("READING FROM DB");
+        sleep(5);
 
         down(mutex);
         rc--;
@@ -24,6 +25,7 @@ int reader() {
         }
         up(mutex);
         print("USING DB");
+        sleep(5);
     }
 }
 
@@ -33,14 +35,14 @@ int writer() {
        down(db);
        up(queue);
        print("WRITING DB") ;   
-       sleep(5);
+       sleep(3);
        up(db);  
     }  
 }
 
 int main() {
-    thread(writer, 2);
-    thread(reader, 1);
+    thread(writer, 1);
+    thread(reader, 10);
     forever {}
   return 0;
 }

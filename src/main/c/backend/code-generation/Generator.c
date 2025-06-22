@@ -59,6 +59,7 @@ static void _generateIncludes() {
     _output(0, "#include <stdio.h>\n");
     _output(0, "#include <stdlib.h>\n");
     _output(0, "#include <unistd.h>\n");
+    _output(0, "#include <semaphore.h>\n");
     _output(0, "#include <pthread.h>\n");
     _output(0, "#include <string.h>\n");
     _output(0, "#include <stdbool.h>\n");
@@ -76,7 +77,7 @@ static const char* _getTypeName(TypeNode* type) {
         case TYPE_STRING: return "char*";
         case TYPE_FLOAT: return "float";
         case TYPE_BOOLEAN: return "bool";
-        case TYPE_SEM: return "pthread_mutex_t*";
+        case TYPE_SEM: return "sem_t*";
         default: return "int";
     }
 }
@@ -118,6 +119,16 @@ static void _generateMainFunction(DeclarationList * declarationList) {
     
     _output(0, "int main() {\n");
     _output(1, "_synchro_runtime_init();\n\n");
+    
+    DeclarationList* current = declarationList;
+    while (current != NULL) {
+        if (current->type && current->type->type == TYPE_SEM && 
+            current->declarationTail && current->declarationTail->type == DECL_CONSTANT) {
+            _output(1, "sem_init(%s, 0, %s_init_value);\n", current->identifier, current->identifier);
+        }
+        current = current->next;
+    }
+    _output(0, "\n");
     
     if (mainFunc != NULL) {
         _output(1, "// Call user's main function\n");
@@ -204,8 +215,13 @@ static void _generateDeclaration(TypeNode* type, char* identifier, DeclarationTa
  */
 static void _generateVariableDeclaration(TypeNode* type, char* identifier, Constant* constant) {
     if (type->type == TYPE_SEM) {
-        _output(0, "pthread_mutex_t %s_mutex = PTHREAD_MUTEX_INITIALIZER;\n", identifier);
-        _output(0, "pthread_mutex_t* %s = &%s_mutex;\n", identifier, identifier);
+        int initValue = 0;
+        if (constant != NULL && constant->type == CONST_INTEGER) {
+            initValue = constant->integer;
+        }
+        _output(0, "sem_t %s_sem;\n", identifier);
+        _output(0, "sem_t* %s = &%s_sem;\n", identifier, identifier);
+        _output(0, "int %s_init_value = %d;\n", identifier, initValue);
     } else {
         _output(0, "%s %s", _getTypeName(type), identifier);
         

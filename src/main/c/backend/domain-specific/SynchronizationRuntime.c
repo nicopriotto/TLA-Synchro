@@ -5,7 +5,7 @@
 /* MODULE INTERNAL STATE */
 
 static Logger * _logger = NULL;
-static pthread_mutex_t _sync_mutex;
+static sem_t _sync_sem;
 static bool _runtime_initialized = false;
 
 void initializeSynchronizationRuntimeModule() {
@@ -147,7 +147,7 @@ ComputationResult computeProgram(Program * program) {
 
 void generateRuntimeInitialization(FILE* output) {
     fprintf(output, "// Runtime globals\n");
-    fprintf(output, "pthread_mutex_t sync_mutex;\n");
+    fprintf(output, "sem_t sync_sem;\n");
     fprintf(output, "bool runtime_initialized = false;\n\n");
 }
 
@@ -157,8 +157,8 @@ void generateBuiltinFunctionDeclarations(FILE* output) {
     fprintf(output, "void _synchro_runtime_cleanup();\n");
     fprintf(output, "void _synchro_print(char* value);\n");
     fprintf(output, "void _synchro_sleep(int seconds);\n");
-    fprintf(output, "void _synchro_up(pthread_mutex_t* mutex);\n");
-    fprintf(output, "void _synchro_down(pthread_mutex_t* mutex);\n");
+    fprintf(output, "void _synchro_up(sem_t* semaphore);\n");
+    fprintf(output, "void _synchro_down(sem_t* semaphore);\n");
     fprintf(output, "void* _synchro_thread(void* (*func)(void*), int thread_count);\n\n");
 }
 
@@ -182,7 +182,7 @@ void generateBuiltinFunctionImplementations(FILE* output) {
     
     fprintf(output, "void _synchro_runtime_init() {\n");
     fprintf(output, "    if (!runtime_initialized) {\n");
-    fprintf(output, "        pthread_mutex_init(&sync_mutex, NULL);\n");
+    fprintf(output, "        sem_init(&sync_sem, 0, 1);\n");
     fprintf(output, "        runtime_initialized = true;\n");
     fprintf(output, "        printf(\"Synchronization runtime initialized\\n\");\n");
     fprintf(output, "    }\n");
@@ -190,17 +190,17 @@ void generateBuiltinFunctionImplementations(FILE* output) {
     
     fprintf(output, "void _synchro_runtime_cleanup() {\n");
     fprintf(output, "    if (runtime_initialized) {\n");
-    fprintf(output, "        pthread_mutex_destroy(&sync_mutex);\n");
+    fprintf(output, "        sem_destroy(&sync_sem);\n");
     fprintf(output, "        runtime_initialized = false;\n");
     fprintf(output, "        printf(\"Synchronization runtime cleaned up\\n\");\n");
     fprintf(output, "    }\n");
     fprintf(output, "}\n\n");
     
     fprintf(output, "void _synchro_print(char* value) {\n");
-    fprintf(output, "    pthread_mutex_lock(&sync_mutex);\n");
+    fprintf(output, "    sem_wait(&sync_sem);\n");
     fprintf(output, "    printf(\"[PRINT] %%s\\n\", value);\n");
     fprintf(output, "    fflush(stdout);\n");
-    fprintf(output, "    pthread_mutex_unlock(&sync_mutex);\n");
+    fprintf(output, "    sem_post(&sync_sem);\n");
     fprintf(output, "}\n\n");
     
     fprintf(output, "void _synchro_sleep(int seconds) {\n");
@@ -209,15 +209,15 @@ void generateBuiltinFunctionImplementations(FILE* output) {
     fprintf(output, "    printf(\"[SLEEP] Woke up after %%d seconds\\n\", seconds);\n");
     fprintf(output, "}\n\n");
     
-    fprintf(output, "void _synchro_up(pthread_mutex_t* mutex) {\n");
-    fprintf(output, "    printf(\"[UP] Releasing mutex\\n\");\n");
-    fprintf(output, "    pthread_mutex_unlock(mutex);\n");
+    fprintf(output, "void _synchro_up(sem_t* semaphore) {\n");
+    fprintf(output, "    printf(\"[UP] Releasing semaphore\\n\");\n");
+    fprintf(output, "    sem_post(semaphore);\n");
     fprintf(output, "}\n\n");
     
-    fprintf(output, "void _synchro_down(pthread_mutex_t* mutex) {\n");
-    fprintf(output, "    printf(\"[DOWN] Acquiring mutex\\n\");\n");
-    fprintf(output, "    pthread_mutex_lock(mutex);\n");
-    fprintf(output, "    printf(\"[DOWN] Mutex acquired\\n\");\n");
+    fprintf(output, "void _synchro_down(sem_t* semaphore) {\n");
+    fprintf(output, "    printf(\"[DOWN] Acquiring semaphore\\n\");\n");
+    fprintf(output, "    sem_wait(semaphore);\n");
+    fprintf(output, "    printf(\"[DOWN] Semaphore acquired\\n\");\n");
     fprintf(output, "}\n\n");
     
     fprintf(output, "void* _synchro_thread(void* (*func)(void*), int thread_count) {\n");
@@ -240,7 +240,7 @@ void generateBuiltinFunctionImplementations(FILE* output) {
     fprintf(output, "    }\n");
     fprintf(output, "    \n");
     fprintf(output, "    free(threads);\n");
-    fprintf(output, "    return (void*)(intptr_t)thread_count; // Return number of threads created\n");
+    fprintf(output, "    return (void*)(intptr_t)thread_count;\n");
     fprintf(output, "}\n\n");
 }
 
@@ -249,23 +249,23 @@ void generateRuntimeCleanup(FILE* output) {
 
 void synchro_runtime_init() {
     if (!_runtime_initialized) {
-        pthread_mutex_init(&_sync_mutex, NULL);
+        sem_init(&_sync_sem, 0, 1);
         _runtime_initialized = true;
     }
 }
 
 void synchro_runtime_cleanup() {
     if (_runtime_initialized) {
-        pthread_mutex_destroy(&_sync_mutex);
+        sem_destroy(&_sync_sem);
         _runtime_initialized = false;
     }
 }
 
 void synchro_print(int value) {
-    pthread_mutex_lock(&_sync_mutex);
+    sem_wait(&_sync_sem);
     printf("[PRINT] %d\n", value);
     fflush(stdout);
-    pthread_mutex_unlock(&_sync_mutex);
+    sem_post(&_sync_sem);
 }
 
 void synchro_sleep(int seconds) {
@@ -275,14 +275,14 @@ void synchro_sleep(int seconds) {
 }
 
 void synchro_up() {
-    printf("[UP] Releasing mutex\n");
-    pthread_mutex_unlock(&_sync_mutex);
+    printf("[UP] Releasing semaphore\n");
+    sem_post(&_sync_sem);
 }
 
 void synchro_down() {
-    printf("[DOWN] Acquiring mutex\n");
-    pthread_mutex_lock(&_sync_mutex);
-    printf("[DOWN] Mutex acquired\n");
+    printf("[DOWN] Acquiring semaphore\n");
+    sem_wait(&_sync_sem);
+    printf("[DOWN] Semaphore acquired\n");
 }
 
 void* synchro_thread(void* (*func)(void*), void* arg) {
