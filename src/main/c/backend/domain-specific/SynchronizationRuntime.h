@@ -8,10 +8,9 @@
 #include <pthread.h>
 #include <stdbool.h>
 
-// Computation result structure (similar to Calculator)
 typedef struct {
     boolean succeed;
-    int value;  // For now, we'll use int as the result type
+    int value;
 } ComputationResult;
 
 /** Initialize module's internal state. */
@@ -20,10 +19,6 @@ void initializeSynchronizationRuntimeModule();
 /** Shutdown module's internal state. */
 void shutdownSynchronizationRuntimeModule();
 
-/**
- * Computes/validates the synchronization program.
- * This is the equivalent of computeExpression in Calculator.
- */
 ComputationResult computeProgram(Program * program);
 
 // Runtime support functions for generated code

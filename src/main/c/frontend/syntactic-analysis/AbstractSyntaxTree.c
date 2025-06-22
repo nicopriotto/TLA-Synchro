@@ -396,7 +396,6 @@ void releaseCondition(Condition* cond) {
 void releaseParameterList(ParameterList* pl) {
     if (!pl) return;
     
-    // Use an iterative approach to avoid stack overflow for large lists
     ParameterList* current = pl;
     ParameterList* next = NULL;
     
@@ -412,7 +411,6 @@ void releaseParameterList(ParameterList* pl) {
 void releaseArgumentList(ArgumentList* al) {
     if (!al) return;
     
-    // Use an iterative approach to avoid stack overflow for large lists
     ArgumentList* current = al;
     ArgumentList* next = NULL;
     
@@ -444,7 +442,6 @@ void releaseDeclarationTail(DeclarationTail* dt) {
 void releaseDeclarationList(DeclarationList* dl) {
     if (!dl) return;
     
-    // Use an iterative approach to avoid stack overflow for large lists
     DeclarationList* current = dl;
     DeclarationList* next = NULL;
     
@@ -477,7 +474,6 @@ void releaseFunction(Function* fn) {
 void releaseFunctionList(FunctionList* fl) {
     if (!fl) return;
     
-    // Use an iterative approach to avoid stack overflow for large lists
     FunctionList* current = fl;
     FunctionList* next = NULL;
     
@@ -502,7 +498,6 @@ void releaseFunctionIdentifier(FunctionIdentifier* fi) {
 void releaseForInitializer(ForInitializer* fi) {
     if (!fi) return;
     
-    // Use an iterative approach to avoid stack overflow for large lists
     ForInitializer* current = fi;
     ForInitializer* next = NULL;
     
@@ -517,7 +512,6 @@ void releaseForInitializer(ForInitializer* fi) {
 void releaseForUpdate(ForUpdate* fu) {
     if (!fu) return;
     
-    // Use an iterative approach to avoid stack overflow for large lists
     ForUpdate* current = fu;
     ForUpdate* next = NULL;
     

@@ -54,7 +54,7 @@ static char* _getBuiltinFunctionIdentifier(FunctionIdentifierType type) {
         case FUNC_UP: return strdup("up");
         case FUNC_DOWN: return strdup("down");
         case FUNC_THREAD: return strdup("thread");
-        case FUNC_USER_DEFINED: return NULL; // Should be provided separately
+        case FUNC_USER_DEFINED: return NULL;
         default: return strdup("unknown");
     }
 }
@@ -69,7 +69,7 @@ static SymbolType convertTypeNodeToSymbolType(TypeNodeType typeNodeType) {
         case TYPE_BOOLEAN: return SYMBOL_BOOLEAN;
         case TYPE_STRING: return SYMBOL_STRING;
         case TYPE_SEM: return SYMBOL_SEMAPHORE;
-        default: return SYMBOL_INTEGER; // Default fallback
+        default: return SYMBOL_INTEGER;
     }
 }
 
@@ -78,7 +78,6 @@ static SymbolType convertTypeNodeToSymbolType(TypeNodeType typeNodeType) {
  */
 static boolean isCompatibleType(SymbolType expected, SymbolType actual) {
     if (expected == actual) return true;
-    // Add type coercion rules if needed
     if ((expected == SYMBOL_FLOAT && actual == SYMBOL_INTEGER) ||
         (expected == SYMBOL_INTEGER && actual == SYMBOL_FLOAT)) {
         return true;
@@ -119,14 +118,11 @@ static void preRegisterFunction(TypeNode* type, char* identifier, DeclarationTai
         return;
     }
     
-    // Check if already exists
     SymbolEntry* existing = findSymbol(&state->symbolTable, identifier, 0);
     if (existing && existing->scope == 0) {
-        // Update existing symbol to function type
         existing->type = SYMBOL_FUNCTION;
         logDebugging(_logger, "PRE-REGISTER: Updated %s to function (type %d) in scope 0", identifier, SYMBOL_FUNCTION);
     } else {
-        // Insert new function symbol
         if (insertSymbol(&state->symbolTable, identifier, SYMBOL_FUNCTION, 0, NULL)) {
             logDebugging(_logger, "PRE-REGISTER: Registered function %s (type %d) in scope 0", identifier, SYMBOL_FUNCTION);
         } else {
@@ -165,7 +161,6 @@ void registerDeclarationHeader(TypeNode* type, char* identifier) {
         return;
     }
     
-    // **FIX**: Store the current identifier for potential function type update
     if (_currentFunctionIdentifier) {
         free(_currentFunctionIdentifier);
     }
@@ -177,18 +172,15 @@ void registerDeclarationHeader(TypeNode* type, char* identifier) {
         return;
     }
     
-    // Use scope 0 for global declarations
     int targetScope = 0;
     SymbolType symbolType = convertTypeNodeToSymbolType(type->type);
     
-    // Check if already exists (avoid duplicates)
     SymbolEntry* existing = findSymbol(&state->symbolTable, identifier, targetScope);
     if (existing && existing->scope == targetScope) {
         logDebugging(_logger, "Symbol %s already registered in header", identifier);
         return;
     }
     
-    // Register with the variable type initially - will be updated to function if needed
     if (insertSymbol(&state->symbolTable, identifier, symbolType, targetScope, NULL)) {
         logDebugging(_logger, "HEADER: Forward declared %s with type %d in scope %d", identifier, symbolType, targetScope);
     } else {
@@ -333,12 +325,10 @@ Expression* IdentifierExpressionSemanticAction(char* identifier) {
     expression->identifier = identifier;
     expression->type = EXPR_IDENTIFIER;
     
-    // IMMEDIATE TYPE CHECK
     if (!CheckTypeImmediate_Expression(expression)) {
         logError(_logger, "Type check failed for identifier expression: %s", identifier);
         CompilerState* state = currentCompilerState();
         if (state) state->succeed = false;
-        // Free the identifier string before releasing the expression
         free(identifier);
         releaseExpression(expression);
         return NULL;
@@ -403,9 +393,6 @@ Expression* FunctionCallExpressionSemanticAction(char* functionName, ArgumentLis
         return NULL;
     }
     
-    // **LENIENT APPROACH**: Don't do strict type checking here since functions
-    // might not be fully registered yet. We'll do comprehensive type checking
-    // in the second pass after all functions are known.
     CompilerState* state = currentCompilerState();
     if (state) {
         SymbolEntry* entry = findSymbol(&state->symbolTable, functionName, -1);
@@ -421,7 +408,7 @@ Expression* FunctionCallExpressionSemanticAction(char* functionName, ArgumentLis
         logError(_logger, "Memory allocation failed for function call expression");
         return NULL;
     }
-    expression->functionCall.functionName = functionName; // Take ownership
+    expression->functionCall.functionName = functionName;
     expression->functionCall.arguments = arguments;
     expression->type = EXPR_FUNCTION_CALL;
     
@@ -435,7 +422,6 @@ Condition* RelationalConditionSemanticAction(Expression* leftValue, RelationalOp
     if (!leftValue || !operator || !rightValue) {
         logError(_logger, "Cannot create relational condition with NULL components (left=%p, op=%p, right=%p)", 
                  (void*)leftValue, (void*)operator, (void*)rightValue);
-        // Clean up any non-NULL components
         if (leftValue) releaseExpression(leftValue);
         if (operator) releaseRelationalOperator(operator);
         if (rightValue) releaseExpression(rightValue);
@@ -457,7 +443,6 @@ Condition* RelationalConditionSemanticAction(Expression* leftValue, RelationalOp
     condition->rightValue = rightValue;
     condition->type = COND_RELATIONAL;
     
-    // IMMEDIATE TYPE CHECK
     if (!CheckTypeImmediate_Condition(condition)) {
         logError(_logger, "Type check failed for relational condition");
         CompilerState* state = currentCompilerState();
@@ -594,9 +579,6 @@ DeclarationList* DeclarationListSemanticAction(TypeNode* type, char* identifier,
         return NULL;
     }
 
-    // **SIMPLIFIED**: Just build the AST node, don't do symbol table management here
-    // The symbol table will be managed by the two-pass approach in ProgramSemanticAction
-    
     DeclarationList* declarationList = calloc(1, sizeof(DeclarationList));
     if (!declarationList) {
         logError(_logger, "Memory allocation failed for declaration list");
@@ -617,7 +599,6 @@ VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, 
     if (!type || !identifier || !condition) {
         logError(_logger, "Cannot create variable declaration with NULL components (type=%p, id=%s, cond=%p)", 
                  (void*)type, identifier ? identifier : "NULL", (void*)condition);
-        // Clean up allocated memory
         if (identifier) free(identifier);
         if (type) releaseTypeNode(type);
         if (condition) releaseCondition(condition);
@@ -626,12 +607,10 @@ VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, 
     
     logDebugging(_logger, "Creating variable declaration for '%s' with type %d", identifier, type->type);
     
-    // IMMEDIATE TYPE CHECK
     if (!CheckTypeImmediate_VariableDeclaration(type, identifier, condition)) {
         logError(_logger, "Type check failed for variable declaration '%s'", identifier);
         CompilerState* state = currentCompilerState();
         if (state) state->succeed = false;
-        // Clean up allocated memory
         free(identifier);
         releaseTypeNode(type);
         releaseCondition(condition);
@@ -640,18 +619,15 @@ VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, 
     
     CompilerState* state = currentCompilerState();
     if (state) {
-        // **PROPER SCOPE HANDLING** - Use current scope for local variables
         int currentScopeId = currentScope(&state->scopeStack);
         
         logDebugging(_logger, "Current scope for variable '%s': %d", identifier, currentScopeId);
         
         SymbolType symbolType = convertTypeNodeToSymbolType(type->type);
         
-        // Check if identifier already exists in current scope
         SymbolEntry* existing = findSymbol(&state->symbolTable, identifier, currentScopeId);
         if (existing && existing->scope == currentScopeId) {
             logError(_logger, "Identifier %s already declared in current scope %d", identifier, currentScopeId);
-            // Don't return NULL here, just log the error but continue
         } else {
             if (insertSymbol(&state->symbolTable, identifier, symbolType, currentScopeId, NULL)) {
                 logDebugging(_logger, "Declared variable %s of type %d in scope %d", 
@@ -671,7 +647,7 @@ VariableDeclaration* VariableDeclarationSemanticActionCondition(TypeNode* type, 
         return NULL;
     }
     variableDeclaration->type = type;
-    variableDeclaration->identifier = identifier; // Take ownership
+    variableDeclaration->identifier = identifier;
     variableDeclaration->condition = condition;
     
     logDebugging(_logger, "Successfully created variable declaration for '%s'", identifier);
@@ -691,7 +667,7 @@ FunctionIdentifier* FunctionIdentifierSemanticAction(FunctionIdentifierType type
     
     if (type == FUNC_USER_DEFINED) {
         if (identifier) {
-            functionIdentifier->identifier = identifier; // Take ownership
+            functionIdentifier->identifier = identifier;
             logDebugging(_logger, "Creating function identifier for user-defined function: %s", identifier);
         } else {
             logError(_logger, "User-defined function requires identifier");
@@ -699,7 +675,6 @@ FunctionIdentifier* FunctionIdentifierSemanticAction(FunctionIdentifierType type
             return NULL;
         }
     } else {
-        // For built-in functions, set the identifier based on the type
         functionIdentifier->identifier = identifier;
         if (functionIdentifier->identifier) {
             logDebugging(_logger, "Creating function identifier for built-in function: %s", functionIdentifier->identifier);
@@ -722,8 +697,6 @@ ParameterList* ParameterListSemanticAction(TypeNode* type, char* identifier, Par
         return NULL;
     }
     
-    // **FIX**: If this is the first parameter and we have a current function identifier,
-    // update that symbol to be a function type
     if (!nextParameters && _currentFunctionIdentifier) {
         CompilerState* state = currentCompilerState();
         if (state) {
@@ -735,13 +708,11 @@ ParameterList* ParameterListSemanticAction(TypeNode* type, char* identifier, Par
         }
     }
     
-    // **FIX**: Register parameter immediately in current scope
     CompilerState* state = currentCompilerState();
     if (state) {
         SymbolType paramType = convertTypeNodeToSymbolType(type->type);
         int currentScopeId = currentScope(&state->scopeStack);
         
-        // Check if parameter already exists in current scope
         SymbolEntry* existing = findSymbol(&state->symbolTable, identifier, currentScopeId);
         if (existing && existing->scope == currentScopeId) {
             logError(_logger, "Parameter %s already declared in current scope %d", identifier, currentScopeId);
@@ -760,7 +731,7 @@ ParameterList* ParameterListSemanticAction(TypeNode* type, char* identifier, Par
         return NULL;
     }
     parameterList->type = type;
-    parameterList->identifier = identifier; // Take ownership
+    parameterList->identifier = identifier;
     parameterList->next = nextParameters;
     
     return parameterList;
@@ -833,7 +804,6 @@ SimpleStatement* FunctionCallSimpleStatementSemanticAction(FunctionIdentifier* f
         return NULL;
     }
     
-    // **LENIENT**: Skip detailed type checking here, let the two-pass approach handle it
     if (function->identifier != NULL) {
         logDebugging(_logger, "Creating function call statement for: %s", function->identifier);
     } else {
@@ -861,7 +831,6 @@ SimpleStatement* IncrementSimpleStatementSemanticAction(char* identifier, boolea
         return NULL;
     }
     
-    // IMMEDIATE TYPE CHECK
     if (!CheckTypeImmediate_IncrementDecrement(identifier)) {
         logError(_logger, "Type check failed for increment of '%s'", identifier);
         CompilerState* state = currentCompilerState();
@@ -874,7 +843,7 @@ SimpleStatement* IncrementSimpleStatementSemanticAction(char* identifier, boolea
         logError(_logger, "Memory allocation failed for increment statement");
         return NULL;
     }
-    simpleStatement->increment.identifier = identifier; // Take ownership
+    simpleStatement->increment.identifier = identifier;
     simpleStatement->increment.isPrefix = isPrefix;
     simpleStatement->type = SIMPLE_INCREMENT;
     
@@ -889,7 +858,6 @@ SimpleStatement* DecrementSimpleStatementSemanticAction(char* identifier, boolea
         return NULL;
     }
     
-    // IMMEDIATE TYPE CHECK
     if (!CheckTypeImmediate_IncrementDecrement(identifier)) {
         logError(_logger, "Type check failed for decrement of '%s'", identifier);
         CompilerState* state = currentCompilerState();
@@ -902,7 +870,7 @@ SimpleStatement* DecrementSimpleStatementSemanticAction(char* identifier, boolea
         logError(_logger, "Memory allocation failed for decrement statement");
         return NULL;
     }
-    simpleStatement->decrement.identifier = identifier; // Take ownership
+    simpleStatement->decrement.identifier = identifier;
     simpleStatement->decrement.isPrefix = isPrefix;
     simpleStatement->type = SIMPLE_DECREMENT;
     
@@ -917,7 +885,6 @@ SimpleStatement* AssignmentSimpleStatementSemanticAction(char* identifier, Expre
         return NULL;
     }
     
-    // IMMEDIATE TYPE CHECK
     if (!CheckTypeImmediate_Assignment(identifier, expression)) {
         logError(_logger, "Type check failed for assignment to '%s'", identifier);
         CompilerState* state = currentCompilerState();
@@ -930,7 +897,7 @@ SimpleStatement* AssignmentSimpleStatementSemanticAction(char* identifier, Expre
         logError(_logger, "Memory allocation failed for assignment statement");
         return NULL;
     }
-    simpleStatement->assignment.identifier = identifier; // Take ownership
+    simpleStatement->assignment.identifier = identifier;
     simpleStatement->assignment.expression = expression;
     simpleStatement->type = SIMPLE_ASSIGNMENT;
     
@@ -983,7 +950,6 @@ SimpleStatement* ReturnIdentifierSimpleStatementSemanticAction(char* identifier)
         return NULL;
     }
     
-    // Check if identifier exists
     CompilerState* state = currentCompilerState();
     if (state) {
         SymbolEntry* entry = findSymbol(&state->symbolTable, identifier, -1);
@@ -999,7 +965,7 @@ SimpleStatement* ReturnIdentifierSimpleStatementSemanticAction(char* identifier)
         logError(_logger, "Memory allocation failed for return identifier statement");
         return NULL;
     }
-    simpleStatement->identifier = identifier; // Take ownership
+    simpleStatement->identifier = identifier;
     simpleStatement->type = RETURN_IDENTIFIER;
     
     return simpleStatement;
@@ -1074,14 +1040,10 @@ OpenStatement* ForOpenStatementSemanticAction(ForInitializer* initializer, Condi
         logError(_logger, "Cannot create for statement with NULL condition or body");
         return NULL;
     }
-    // **NEW APPROACH**: Create a temporary scope for for-loop variables during type checking
-    // This ensures that for-loop variables are available when checking the condition and body
     CompilerState* state = currentCompilerState();
     if (state && initializer) {
-        // Enter a temporary scope for the for-loop
         enterScope();
         
-        // Register for-loop variables in the temporary scope
         ForInitializer* init = initializer;
         while (init && init->declaration) {
             VariableDeclaration* decl = init->declaration;
@@ -1096,13 +1058,11 @@ OpenStatement* ForOpenStatementSemanticAction(ForInitializer* initializer, Condi
             init = init->next;
         }
         
-        // Type check the condition and body with for-loop variables in scope
         if (condition && !CheckTypeImmediate_Condition(condition)) {
             logError(_logger, "For-loop condition type check failed");
             state->succeed = false;
         }
         
-        // Exit the temporary scope
         exitScope();
     }
     
@@ -1142,14 +1102,6 @@ ClosedStatement* SimpleClosedStatementSemanticAction(SimpleStatement* simpleStat
 
 ClosedStatement* ClosedListStatementSemanticAction(StatementList* statementList){
     _logSyntacticAnalyzerAction(__FUNCTION__);
-    
-    // if (!statementList) {
-    //     logError(_logger, "Cannot create closed statement with NULL statement list");
-    //     return NULL;
-    // }
-    
-    // NOTE: Scope should already be entered when parsing the block
-    // This function is called after statements are parsed, so we don't enter scope here
     
     ClosedStatement* closedStatement = calloc(1, sizeof(ClosedStatement));
     if (!closedStatement) {
@@ -1211,13 +1163,10 @@ ClosedStatement* ForClosedStatementSemanticAction(ForInitializer* initializer, C
         return NULL;
     }
     
-    // **NEW APPROACH**: Create a temporary scope for for-loop variables during type checking
     CompilerState* state = currentCompilerState();
     if (state && initializer) {
-        // Enter a temporary scope for the for-loop
         enterScope();
         
-        // Register for-loop variables in the temporary scope
         ForInitializer* init = initializer;
         while (init && init->declaration) {
             VariableDeclaration* decl = init->declaration;
@@ -1232,13 +1181,11 @@ ClosedStatement* ForClosedStatementSemanticAction(ForInitializer* initializer, C
             init = init->next;
         }
         
-        // Type check the condition with for-loop variables in scope
         if (condition && !CheckTypeImmediate_Condition(condition)) {
             logError(_logger, "For-loop condition type check failed");
             state->succeed = false;
         }
         
-        // Exit the temporary scope
         exitScope();
     }
     
@@ -1398,9 +1345,6 @@ DeclarationTail* FunctionSemanticAction(ParameterList* parameters, StatementList
     _logSyntacticAnalyzerAction(__FUNCTION__);
     logDebugging(_logger, "Creating function declaration");
 
-    // **REMOVED**: Parameter registration now happens in ParameterListSemanticAction
-    // Parameters are already registered when they were created
-    
     DeclarationTail* declarationTail = calloc(1, sizeof(DeclarationTail));
     if (!declarationTail) {
         logError(_logger, "Memory allocation failed for function declaration tail");
@@ -1443,18 +1387,13 @@ Program* ProgramSemanticAction(DeclarationList* globalDeclarations, CompilerStat
         return NULL;
     }
     
-    // **TWO-PASS APPROACH**: 
-    // FIRST PASS: Pre-register all functions before doing any type checking
     if (globalDeclarations) {
         preRegisterAllFunctions(globalDeclarations);
         
-        // Dump symbol table after first pass
         logDebugging(_logger, "Symbol table after FIRST PASS (function pre-registration):");
         dumpSymbolTable(&compilerState->symbolTable);
     }
     
-    // SECOND PASS: Now all functions are known, so type checking should work correctly
-    // The type checking has already been done during parsing, but now with all functions registered
     logDebugging(_logger, "=== SECOND PASS: Type checking with complete function knowledge ===");
     
     Program* program = calloc(1, sizeof(Program));
@@ -1465,24 +1404,19 @@ Program* ProgramSemanticAction(DeclarationList* globalDeclarations, CompilerStat
     program->globalDeclarations = globalDeclarations;
     compilerState->abstractSyntaxtTree = program;
     
-    // Dump symbol table for debugging
     logDebugging(_logger, "Symbol table at program completion:");
     dumpSymbolTable(&compilerState->symbolTable);
     
-    // **FIX**: Check if any errors occurred during compilation
     if (compilerState->succeed == false) {
         logError(_logger, "Program compilation failed due to earlier errors.");
     } else {
         logDebugging(_logger, "Program compilation completed successfully.");
     }
 
-    // Set final success state
     compilerState->succeed = compilerState->succeed;
     
-    // Clean up any remaining local scopes (keep global and builtin)
     removeScopesAbove(&compilerState->symbolTable, 0);
     
-    // Dump final symbol table
     logDebugging(_logger, "Final symbol table after cleanup:");
     dumpSymbolTable(&compilerState->symbolTable);
     

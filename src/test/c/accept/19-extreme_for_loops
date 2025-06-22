@@ -1,13 +1,10 @@
-// Complex for loop patterns
 int main() {
-    // Multiple variable declarations in for loop
     int i = 0;
     int j = 10;
     for (; i < j; i++) {
         int p = i + j;
         print(p);
         
-        // Nested for with complex conditions
         for (int k = i; k < (i + j) and k < 20; k = k + 2) {
             if (k % 3 == 0) {
                 for (int m = 0; m < k and m < 5; m++) {

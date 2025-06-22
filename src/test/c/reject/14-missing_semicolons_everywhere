@@ -1,19 +1,18 @@
-// Missing semicolons in various places
 int main() {
-    int x = 5  // Missing semicolon
+    int x = 5  
     int y = 10;
     
     if (x < y) {
-        print(x)  // Missing semicolon
+        print(x)
         x++
-    }  // Missing semicolon
+    }  
     
     while (x < 20) {
-        x = x + 1  // Missing semicolon
+        x = x + 1  
         if (x == 15) {
-            print(x)  // Missing semicolon
+            print(x)
         }
     }
     
-    return x  // Missing semicolon
+    return x
 }

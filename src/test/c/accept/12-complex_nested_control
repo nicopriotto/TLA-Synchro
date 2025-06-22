@@ -1,4 +1,3 @@
-// Complex nested control structures with all combinations
 int main() {
     int x = 5;
     int y = 10;

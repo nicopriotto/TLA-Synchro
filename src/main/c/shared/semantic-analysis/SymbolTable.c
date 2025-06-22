@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define BUILTIN_SCOPE_ID -1  // Built-in functions use -1
-#define GLOBAL_SCOPE_ID 0    // Global user symbols use 0
+#define BUILTIN_SCOPE_ID -1  
+#define GLOBAL_SCOPE_ID 0   
 
 static SymbolEntry *newEntry(const char *id, SymbolType t, int scope, const void *data);
 static void freeEntry(SymbolEntry *e);
@@ -27,7 +27,6 @@ void initSymbolTable(SymbolTable* table) {
     table->head = NULL;
     table->size = 0;
     
-    // Insert built-in functions with scope -1 (builtin scope)
     insertSymbol(table, "print", SYMBOL_FUNCTION, BUILTIN_SCOPE_ID, NULL);
     insertSymbol(table, "sleep", SYMBOL_FUNCTION, BUILTIN_SCOPE_ID, NULL);
     insertSymbol(table, "up", SYMBOL_FUNCTION, BUILTIN_SCOPE_ID, NULL);
@@ -41,11 +40,10 @@ void initSymbolTable(SymbolTable* table) {
 boolean insertSymbol(SymbolTable* table, const char* identifier, SymbolType type, int scope, SymbolData* data) {
     if (!table || !identifier) return false;
     
-    // Check if symbol already exists in the same scope
     SymbolEntry* existing = findSymbol(table, identifier, scope);
     if (existing && existing->scope == scope) {
         logDebugging(_logger, "Symbol %s already exists in scope %d", identifier, scope);
-        return false; // Symbol already exists in this scope
+        return false;
     }
     
     SymbolEntry* entry = malloc(sizeof(SymbolEntry));
@@ -66,7 +64,6 @@ boolean insertSymbol(SymbolTable* table, const char* identifier, SymbolType type
         memset(&entry->data, 0, sizeof(SymbolData));
     }
     
-    // Insert at the beginning of the list
     entry->next = table->head;
     table->head = entry;
     table->size++;
@@ -82,7 +79,6 @@ SymbolEntry* findSymbol(SymbolTable* table, const char* identifier, int scope) {
     SymbolEntry* current = table->head;
     
     if (scope == -1) {
-        // Search in any scope, return the first match (most recent)
         while (current) {
             if (strcmp(current->identifier, identifier) == 0) {
                 return current;
@@ -90,7 +86,6 @@ SymbolEntry* findSymbol(SymbolTable* table, const char* identifier, int scope) {
             current = current->next;
         }
     } else {
-        // Search in specific scope
         while (current) {
             if (strcmp(current->identifier, identifier) == 0 && current->scope == scope) {
                 return current;
@@ -108,7 +103,6 @@ boolean updateSymbolValue(SymbolTable *table, const char *id, int scope, const v
     SymbolEntry *e = findSymbol(table, id, scope);
     if (!e) return false;
     
-    // Free old string value if it exists
     if (e->type == SYMBOL_STRING && e->data.stringValue) {
         free(e->data.stringValue);
         e->data.stringValue = NULL;
@@ -132,7 +126,6 @@ boolean updateSymbolValue(SymbolTable *table, const char *id, int scope, const v
             e->data.intValue = *(const int*)data; 
             break;
         case SYMBOL_FUNCTION: 
-            // Functions don't have data values to update
             break;
     }
     return true;
@@ -182,7 +175,6 @@ void removeScopeSymbols(SymbolTable* table, int scope) {
     
     while (current) {
         if (current->scope == scope) {
-            // Remove this symbol
             if (prev) {
                 prev->next = current->next;
             } else {
@@ -191,8 +183,7 @@ void removeScopeSymbols(SymbolTable* table, int scope) {
             
             SymbolEntry* toDelete = current;
             current = current->next;
-            
-            // Free the symbol
+
             free(toDelete->identifier);
             free(toDelete);
             table->size--;
@@ -214,7 +205,6 @@ void removeScopesAbove(SymbolTable* table, int maxScope) {
     
     while (current) {
         if (current->scope > maxScope) {
-            // Remove this symbol
             if (prev) {
                 prev->next = current->next;
             } else {
@@ -224,7 +214,6 @@ void removeScopesAbove(SymbolTable* table, int maxScope) {
             SymbolEntry* toDelete = current;
             current = current->next;
             
-            // Free the symbol
             free(toDelete->identifier);
             free(toDelete);
             table->size--;
@@ -295,7 +284,6 @@ static SymbolEntry *newEntry(const char *id, SymbolType t, int scope, const void
     e->scope = scope;
     e->next = NULL;
     
-    // Initialize data based on type
     switch (t) {
         case SYMBOL_INTEGER: 
             e->data.intValue = data ? *(const int*)data : 0; 
@@ -321,7 +309,6 @@ static SymbolEntry *newEntry(const char *id, SymbolType t, int scope, const void
             e->data.intValue = data ? *(const int*)data : 0; 
             break;
         case SYMBOL_FUNCTION: 
-            // Functions don't store data values
             break;
     }
     

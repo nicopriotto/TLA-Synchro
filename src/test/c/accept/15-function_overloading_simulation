@@ -1,4 +1,3 @@
-// Simulating function overloading with different parameter patterns
 int process_int(int value) {
     int newValue = value * 2;
     return newValue;

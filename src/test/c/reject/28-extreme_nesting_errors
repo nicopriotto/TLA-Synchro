@@ -1,4 +1,3 @@
-// Extreme nesting with errors
 int main() {
     if (true) {
         while (true) {
@@ -9,8 +8,6 @@ int main() {
                             if (j == 2) {
                                 forever {
                                     if (true) {
-                                        // Missing closing braces from here
                                         print(i + j);
                                         return 0;
-                    // All the missing closing braces cause syntax errors
 }

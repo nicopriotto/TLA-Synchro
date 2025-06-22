@@ -405,4 +405,4 @@ void releaseVariableDeclaration(VariableDeclaration* variableDeclaration);
 void releaseRelationalOperator(RelationalOperator* relationalOperator);
 void releaseDeclarationTail(DeclarationTail* declarationTail);
 
-#endif // ABSTRACT_SYNTAX_TREE_HEADER
+#endif

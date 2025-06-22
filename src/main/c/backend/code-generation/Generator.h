@@ -9,15 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 
-/** Initialize module's internal state. */
 void initializeGeneratorModule();
-
-/** Shutdown module's internal state. */
 void shutdownGeneratorModule();
-
-/**
- * Generates the final C code output using the current compiler state.
- */
 void generate(CompilerState * compilerState);
 
 #endif

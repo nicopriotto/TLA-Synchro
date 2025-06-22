@@ -1,25 +1,20 @@
-// Invalid semaphore operations
-sem invalid_sem;        // Semaphore without initialization
+sem invalid_sem;
 
 int main() {
-    sem local_sem = -1;  // Invalid negative semaphore value
+    sem local_sem = -1;
     
-    // Invalid semaphore operations
-    up(5);               // up() with argument
-    down("invalid");     // down() with invalid argument
+    up(5);
+    down("invalid");
     
-    // Semaphore arithmetic
-    local_sem = local_sem + 1;  // Can't do arithmetic on semaphores
-    local_sem = local_sem * 2;  // Can't multiply semaphores
+    local_sem = local_sem + 1;
+    local_sem = local_sem * 2;
     
-    // Invalid semaphore comparisons
-    if (local_sem > invalid_sem) {  // Can't compare semaphores
+    if (local_sem > invalid_sem) {
         print(1);
     }
     
-    // Invalid semaphore assignments
-    int x = local_sem;   // Can't assign semaphore to int
-    local_sem = 10;      // Can't assign int to semaphore after declaration
+    int x = local_sem;
+    local_sem = 10;
     
     return 0;
 }

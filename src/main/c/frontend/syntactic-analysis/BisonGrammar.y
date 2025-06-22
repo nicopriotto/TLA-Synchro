@@ -9,7 +9,7 @@ void exitBlockScope(void);
 
 %}
 
-// You touch this, and you die.
+// You touch this, and you live :)
 %define api.value.union.name SemanticValue
 
 %union {
@@ -215,7 +215,7 @@ openStatement
 closedStatement
     : simpleStatement SEMICOLON                                                                                                                     { $$ = SimpleClosedStatementSemanticAction($1); }
     | IF LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closedStatement ELSE closedStatement                                                          { $$ = IfElseClosedStatementSemanticAction($3, $5, $7); }
-    | LEFT_BRACE { enterBlockScope(); } statementList RIGHT_BRACE { exitBlockScope(); }                                                           { $$ = ClosedListStatementSemanticAction($3);}
+    | LEFT_BRACE { enterBlockScope(); } statementList RIGHT_BRACE { exitBlockScope(); }                                                             { $$ = ClosedListStatementSemanticAction($3);}
     | WHILE LEFT_PARENTHESIS condition RIGHT_PARENTHESIS closedStatement                                                                            { $$ = WhileClosedStatementSemanticAction($3, $5); }
     | FOR LEFT_PARENTHESIS forInitializer SEMICOLON conditionOptional SEMICOLON forUpdate RIGHT_PARENTHESIS closedStatement                         { $$ = ForClosedStatementSemanticAction($3, $5, $7, $9); }
     | FOREVER closedStatement                                                                                                                       { $$ = ForeverClosedStatementSemanticAction($2); }

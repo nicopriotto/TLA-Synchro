@@ -62,7 +62,7 @@ static void _generateIncludes() {
     _output(0, "#include <pthread.h>\n");
     _output(0, "#include <string.h>\n");
     _output(0, "#include <stdbool.h>\n");
-    _output(0, "#include <stdint.h>\n\n"); // Added for intptr_t
+    _output(0, "#include <stdint.h>\n\n");
 }
 
 /**
@@ -76,7 +76,7 @@ static const char* _getTypeName(TypeNode* type) {
         case TYPE_STRING: return "char*";
         case TYPE_FLOAT: return "float";
         case TYPE_BOOLEAN: return "bool";
-        case TYPE_SEM: return "pthread_mutex_t*"; // Changed to mutex
+        case TYPE_SEM: return "pthread_mutex_t*";
         default: return "int";
     }
 }
@@ -91,7 +91,7 @@ static const char* _getBuiltinFunctionName(const char* funcName) {
     if (strcmp(funcName, "up") == 0) return "_synchro_up";
     if (strcmp(funcName, "down") == 0) return "_synchro_down";
     if (strcmp(funcName, "thread") == 0) return "_synchro_thread";
-    return funcName; // User-defined function
+    return funcName;
 }
 
 /**
@@ -121,7 +121,7 @@ static void _generateMainFunction(DeclarationList * declarationList) {
     
     if (mainFunc != NULL) {
         _output(1, "// Call user's main function\n");
-        _output(1, "_userMain(NULL);\n"); // Call the renamed user's main function
+        _output(1, "_userMain(NULL);\n");
     } else {
         _output(1, "// No main function found\n");
         _output(1, "printf(\"No main function to execute\\n\");\n");
@@ -145,7 +145,6 @@ static void _generateProgram(Program * program) {
     generateBuiltinFunctionImplementations(_outputFile);
     generateRuntimeCleanup(_outputFile);
     
-    // Generate global declarations (excluding main)
     if (program->globalDeclarations != NULL) {
         DeclarationList* current = program->globalDeclarations;
         while (current != NULL) {
@@ -156,13 +155,11 @@ static void _generateProgram(Program * program) {
         }
     }
     
-    // Generate user's main function
     DeclarationList* mainFunc = _findMainFunction(program->globalDeclarations);
     if (mainFunc != NULL) {
         _generateDeclaration(mainFunc->type, mainFunc->identifier, mainFunc->declarationTail);
     }
     
-    // Generate runtime's main function
     _generateMainFunction(program->globalDeclarations);
     
     logDebugging(_logger, "Code generation completed.");
@@ -174,10 +171,8 @@ static void _generateProgram(Program * program) {
 static void _generateDeclarationList(DeclarationList * declarationList) {
     if (declarationList == NULL) return;
     
-    // Generate current declaration
     _generateDeclaration(declarationList->type, declarationList->identifier, declarationList->declarationTail);
     
-    // Generate next declarations
     if (declarationList->next != NULL) {
         _generateDeclarationList(declarationList->next);
     }
@@ -188,7 +183,6 @@ static void _generateDeclarationList(DeclarationList * declarationList) {
  */
 static void _generateDeclaration(TypeNode* type, char* identifier, DeclarationTail* declarationTail) {
     if (declarationTail == NULL) {
-        // Simple variable declaration without initialization
         _output(0, "%s %s;\n", _getTypeName(type), identifier);
         return;
     }
@@ -210,7 +204,6 @@ static void _generateDeclaration(TypeNode* type, char* identifier, DeclarationTa
  */
 static void _generateVariableDeclaration(TypeNode* type, char* identifier, Constant* constant) {
     if (type->type == TYPE_SEM) {
-        // Special handling for semaphores - create and initialize a mutex
         _output(0, "pthread_mutex_t %s_mutex = PTHREAD_MUTEX_INITIALIZER;\n", identifier);
         _output(0, "pthread_mutex_t* %s = &%s_mutex;\n", identifier, identifier);
     } else {
@@ -242,32 +235,26 @@ static void _generateVariableDeclaration(TypeNode* type, char* identifier, Const
  * Generates a function declaration
  */
 static void _generateFunctionDeclaration(TypeNode* type, char* identifier, ParameterList* parameterList, StatementList* statementList) {
-    // Rename main function to avoid conflict with runtime main
     const char* functionName = identifier;
     if (identifier != NULL && strcmp(identifier, "main") == 0) {
         functionName = "_userMain";
-        // Main function still returns void* for thread compatibility
         _output(0, "void* %s(", functionName);
     } else {
-        // User-defined functions should be thread-compatible (void* func(void*))
         _output(0, "void* %s(", functionName);
     }
     
     if (parameterList != NULL) {
         _generateParameterList(parameterList);
     } else {
-        // All functions need void* parameter for thread compatibility
         _output(0, "void* unused");
     }
     
     _output(0, ") {\n");
     
-    // Generate function body
     if (statementList != NULL) {
         _generateStatementList(statementList);
     }
     
-    // Add NULL return for thread compatibility
     _output(1, "return NULL;\n");
     _output(0, "}\n\n");
 }
@@ -278,10 +265,8 @@ static void _generateFunctionDeclaration(TypeNode* type, char* identifier, Param
 static void _generateParameterList(ParameterList * paramList) {
     if (paramList == NULL) return;
     
-    // Generate current parameter
     _output(0, "%s %s", _getTypeName(paramList->type), paramList->identifier);
     
-    // Generate remaining parameters
     if (paramList->next != NULL) {
         _output(0, ", ");
         _generateParameterList(paramList->next);
@@ -294,10 +279,8 @@ static void _generateParameterList(ParameterList * paramList) {
 static void _generateStatementList(StatementList * stmtList) {
     if (stmtList == NULL) return;
     
-    // Generate current statement
     _generateStatement(stmtList->statement);
     
-    // Generate remaining statements
     if (stmtList->next != NULL) {
         _generateStatementList(stmtList->next);
     }
@@ -309,12 +292,10 @@ static void _generateStatementList(StatementList * stmtList) {
 static void _generateForInitializer(ForInitializer * forInit) {
     if (forInit == NULL) return;
     
-    // Generate current initializer
     if (forInit->declaration) {
         _output(0, "%s %s", _getTypeName(forInit->declaration->type), 
             forInit->declaration->identifier);
         
-        // Handle initialization from condition (which contains the expression)
         if (forInit->declaration->condition && 
             forInit->declaration->condition->type == COND_EXPRESSION) {
             _output(0, " = ");
@@ -322,7 +303,6 @@ static void _generateForInitializer(ForInitializer * forInit) {
         }
     }
     
-    // Generate remaining initializers
     if (forInit->next != NULL) {
         _output(0, ", ");
         _generateForInitializer(forInit->next);
@@ -335,7 +315,6 @@ static void _generateForInitializer(ForInitializer * forInit) {
 static void _generateForUpdate(ForUpdate * forUpdate) {
     if (forUpdate == NULL) return;
     
-    // Generate current update
     if (forUpdate->statement) {
         switch (forUpdate->statement->type) {
             case SIMPLE_INCREMENT:
@@ -357,12 +336,10 @@ static void _generateForUpdate(ForUpdate * forUpdate) {
                 _generateExpression(forUpdate->statement->assignment.expression);
                 break;
             default:
-                // Handle other statement types if needed
                 break;
         }
     }
     
-    // Generate remaining updates
     if (forUpdate->next != NULL) {
         _output(0, ", ");
         _generateForUpdate(forUpdate->next);
@@ -405,19 +382,16 @@ static void _generateStatement(Statement * stmt) {
         case STMT_FOR:
             _output(1, "for (");
             
-            // Generate initializer
             if (stmt->forStatement.initializer != NULL) {
                 _generateForInitializer(stmt->forStatement.initializer);
             }
             _output(0, "; ");
             
-            // Generate condition
             if (stmt->forStatement.condition != NULL) {
                 _generateCondition(stmt->forStatement.condition);
             }
             _output(0, "; ");
             
-            // Generate update
             if (stmt->forStatement.update != NULL) {
                 _generateForUpdate(stmt->forStatement.update);
             }
@@ -479,12 +453,10 @@ static void _generateSimpleStatement(SimpleStatement * simpleStmt) {
                 _output(1, "%s %s", _getTypeName(simpleStmt->declaration->type), 
                     simpleStmt->declaration->identifier);
                 
-                // Handle initialization from condition (which contains the expression)
                 if (simpleStmt->declaration->condition && 
                     simpleStmt->declaration->condition->type == COND_EXPRESSION) {
                     _output(0, " = ");
                     
-                    // No casting needed since functions now return their proper types
                     _generateExpression(simpleStmt->declaration->condition->expression.expression);
                 }
                 
@@ -552,7 +524,7 @@ static void _generateCondition(Condition * condition) {
             _output(0, ")");
             break;
         case COND_EMPTY:
-            _output(0, "1"); // true
+            _output(0, "1");
             break;
         case COND_EXPRESSION:
             _generateExpression(condition->expression.expression);
@@ -655,13 +627,10 @@ static void _generateExpression(Expression * expr) {
             break;
         case EXPR_FUNCTION_CALL:
             if (expr->functionCall.functionName != NULL) {
-                // Check if it's a user-defined function (not built-in)
                 const char* builtinName = _getBuiltinFunctionName(expr->functionCall.functionName);
                 if (strcmp(builtinName, expr->functionCall.functionName) == 0) {
-                    // User-defined function - call it directly
                     _output(0, "%s(", expr->functionCall.functionName);
                 } else {
-                    // Built-in function - use the mapped name
                     _output(0, "%s(", builtinName);
                 }
                 
@@ -682,10 +651,8 @@ static void _generateExpression(Expression * expr) {
 static void _generateArgumentList(ArgumentList * argList) {
     if (argList == NULL) return;
     
-    // Generate current argument
     _generateExpression(argList->expression);
     
-    // Generate remaining arguments
     if (argList->next != NULL) {
         _output(0, ", ");
         _generateArgumentList(argList->next);

@@ -5,10 +5,9 @@
 #include "semantic-analysis/ScopeStack.h"
 #include "Type.h"
 
-// Compilation status enum - CRITICAL: SUCCEED must be 0, FAILED must be non-zero
 typedef enum {
-    SUCCEED = 0,    // Success (Unix convention)
-    FAILED = 1      // Failure (Unix convention)
+    SUCCEED = 0,    
+    FAILED = 1      
 } CompilationStatus;
 
 typedef struct {
@@ -19,7 +18,6 @@ typedef struct {
     int value;
 } CompilerState;
 
-// Global state access function
 CompilerState* currentCompilerState(void);
 
 #endif

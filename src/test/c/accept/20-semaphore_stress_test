@@ -1,4 +1,3 @@
-// Stress testing semaphore operations
 sem resource1 = 3;
 sem resource2 = 2;
 sem mutex_lock = 1;
@@ -6,31 +5,31 @@ int shared_data = 0;
 
 int producer() {
     for (int i = 0; i < 10; i++) {
-        down(); // resource1
-        down(); // resource2
-        down(); // mutex_lock
+        down();
+        down();
+        down();
         
         shared_data++;
         print(shared_data);
         sleep(1);
         
-        up(); // mutex_lock
-        up(); // resource2
-        up(); // resource1
+        up();
+        up();
+        up();
     }
     return shared_data;
 }
 
 int consumer() {
     while (shared_data < 50) {
-        down(); // mutex_lock
+        down();
         
         if (shared_data > 0) {
             shared_data--;
             print(shared_data);
         }
         
-        up(); // mutex_lock
+        up();
         sleep(2);
     }
     return 0;
@@ -41,7 +40,7 @@ int main() {
     thread(producer);
     thread(consumer);
     
-    sleep(30); // Let threads work
+    sleep(30);
     
     return shared_data;
 }

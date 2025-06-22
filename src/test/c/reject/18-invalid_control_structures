@@ -1,33 +1,26 @@
-// Invalid control structure syntax
 int main() {
     int x = 5;
     
-    // Missing condition parentheses
     if x > 0 {
         print(x);
     }
     
-    // Missing condition
     if () {
         print(1);
     }
     
-    // Invalid while syntax
     while {
         x--;
     }
     
-    // Invalid for loop syntax
-    for (int i = 0; i < 10) {  // Missing increment
+    for (int i = 0; i < 10) {
         print(i);
     }
     
-    // Missing for loop parts
-    for (;;) {  // Empty for loop parts
-        break;  // break not supported
+    for (;;) {
+        break;
     }
     
-    // Invalid else without if
     else {
         print(2);
     }

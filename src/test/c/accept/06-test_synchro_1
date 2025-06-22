@@ -27,21 +27,20 @@ int reader() {
     }
 }
 
-int writer(string name) {
+int writer() {
     forever {
        down(queue);
        down(db);
        up(queue);
        print("WRITING DB") ;   
-       sleep(5); // "writing" time simulation
+       sleep(5);
        up(db);  
     }  
 }
 
 int main() {
-    reader(queue);
-    int wr = writer("pepinoso");
-    //   thread(writer("Pepe"));
-//   thread(reader);
+    thread(writer, 2);
+    thread(reader, 1);
+    forever {}
   return 0;
 }

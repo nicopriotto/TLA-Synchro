@@ -38,7 +38,6 @@ static ComputationResult _validateProgram(Program * program) {
     
     logDebugging(_logger, "Validating program structure...");
     
-    // Validate global declarations
     if (program->globalDeclarations != NULL) {
         if (!_validateDeclarationList(program->globalDeclarations)) {
             logError(_logger, "Invalid global declarations");
@@ -46,9 +45,8 @@ static ComputationResult _validateProgram(Program * program) {
         }
     }
     
-    // For now, we consider any valid program structure as successful
     result.succeed = true;
-    result.value = 1; // Success indicator
+    result.value = 1;
     
     logDebugging(_logger, "Program validation completed successfully");
     return result;
@@ -60,17 +58,14 @@ static ComputationResult _validateProgram(Program * program) {
 static boolean _validateDeclarationList(DeclarationList * declarationList) {
     if (declarationList == NULL) return true;
     
-    // Validate current declaration
     if (declarationList->identifier == NULL) {
         logError(_logger, "Declaration has NULL identifier");
         return false;
     }
     
-    // Validate declaration tail (function or constant)
     if (declarationList->declarationTail != NULL) {
         switch (declarationList->declarationTail->type) {
             case DECL_FUNCTION:
-                // Validate function body
                 if (declarationList->declarationTail->function.statementList != NULL) {
                     if (!_validateStatementList(declarationList->declarationTail->function.statementList)) {
                         return false;
@@ -78,12 +73,10 @@ static boolean _validateDeclarationList(DeclarationList * declarationList) {
                 }
                 break;
             case DECL_CONSTANT:
-                // Constants are always valid if they exist
                 break;
         }
     }
     
-    // Validate next declarations
     if (declarationList->next != NULL) {
         return _validateDeclarationList(declarationList->next);
     }
@@ -97,12 +90,10 @@ static boolean _validateDeclarationList(DeclarationList * declarationList) {
 static boolean _validateStatementList(StatementList * statementList) {
     if (statementList == NULL) return true;
     
-    // Validate current statement
     if (!_validateStatement(statementList->statement)) {
         return false;
     }
     
-    // Validate remaining statements
     if (statementList->next != NULL) {
         return _validateStatementList(statementList->next);
     }
@@ -118,7 +109,6 @@ static boolean _validateStatement(Statement * statement) {
     
     switch (statement->type) {
         case STMT_SIMPLE:
-            // Simple statements are generally valid if they parse correctly
             return true;
         case STMT_IF:
             return _validateStatement(statement->ifStatement.thenStatement);
@@ -155,7 +145,6 @@ ComputationResult computeProgram(Program * program) {
     return result;
 }
 
-// Runtime support functions for code generation
 void generateRuntimeInitialization(FILE* output) {
     fprintf(output, "// Runtime globals\n");
     fprintf(output, "pthread_mutex_t sync_mutex;\n");
@@ -256,11 +245,8 @@ void generateBuiltinFunctionImplementations(FILE* output) {
 }
 
 void generateRuntimeCleanup(FILE* output) {
-    // This function can be used to generate any cleanup code if needed
-    // For now, it's empty as cleanup is handled in synchro_runtime_cleanup()
 }
 
-// Runtime functions (these would be used if running the generated code)
 void synchro_runtime_init() {
     if (!_runtime_initialized) {
         pthread_mutex_init(&_sync_mutex, NULL);

@@ -1,27 +1,31 @@
 sem mutex = 1;
+int sleepTime = 1;
 
 int A() {
-    while(2 > 1) {
+   forever {
         down(mutex);
-        print("ACCESO SECCION CRITICA - A");
+        print("ACCESO SECCIÓN CRÍTICA - A");
+        sleep(sleepTime);
         up(mutex);
+        sleep(sleepTime);
     }
 }
 
 int B() {
-    while(2 > 1) {
+    forever {
         down(mutex);
-        print("ACCESO SECCION CRITICA - B");
+        print("ACCESO SECCIÓN CRÍTICA - B");
+        sleep(sleepTime);
         up(mutex);
+        sleep(sleepTime);
     }
 }
 
 int main() {
-    int a = 0;
-    thread(A, 2);   
+    int a = 2;
+    thread(A, a);   
     thread(B, 5);
-    forever {
-
-    }
+    forever {}
     return 0;
 }
+

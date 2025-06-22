@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #define INITIAL_CAP 20
-#define GLOBAL_SCOPE_ID 0  // Use 0 for global scope instead of -1
+#define GLOBAL_SCOPE_ID 0 
 
 static void ensureCapacity(ScopeStack *stk) {
     if (stk->size == stk->capacity) {
@@ -25,7 +25,7 @@ void initScopeStack(ScopeStack *stk) {
     }    
     stk->size = 0;
     stk->capacity = INITIAL_CAP;
-    stk->nextScopeId = 1;  // Start from 1, 0 is reserved for global
+    stk->nextScopeId = 1;
 }
 
 void pushScope(ScopeStack *stk) {
@@ -37,11 +37,10 @@ void pushScope(ScopeStack *stk) {
 void popScope(ScopeStack *stk, SymbolTable *st) {
     if (!stk || stk->size == 0) return;
     int scopeId = stk->levels[--stk->size];
-    //removeScopeSymbols(st, scopeId);
 }
 
 int currentScope(const ScopeStack *stk) {
-    if (!stk || stk->size == 0) return GLOBAL_SCOPE_ID;  // Return 0 for global scope
+    if (!stk || stk->size == 0) return GLOBAL_SCOPE_ID; 
     return stk->levels[stk->size - 1];
 }
 

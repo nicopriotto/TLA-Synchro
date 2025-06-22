@@ -41,10 +41,8 @@ static SymbolEntry* lookupSymbolInScope(const char* identifier) {
     CompilerState* state = currentCompilerState();
     if (!state) return NULL;
     
-    // Search from current scope down to builtin scope (-1)
     int currentScopeId = currentScope(&state->scopeStack);
     
-    // First try current scope and all parent scopes
     for (int scope = currentScopeId; scope >= -1; scope--) {
         SymbolEntry* entry = findSymbol(&state->symbolTable, identifier, scope);
         if (entry && entry->scope == scope) {
@@ -69,7 +67,6 @@ static boolean isNumericType(SymbolType type) {
 static boolean isCompatibleAssignment(SymbolType target, SymbolType source) {
     if (target == source) return true;
     
-    // Allow int <-> float conversions
     if ((target == SYMBOL_INTEGER && source == SYMBOL_FLOAT) ||
         (target == SYMBOL_FLOAT && source == SYMBOL_INTEGER)) {
         return true;
@@ -114,7 +111,6 @@ static SymbolType getExpressionType(Expression* expr) {
                 return (SymbolType)-1;
             }
             
-            // If either operand is float, result is float
             if (leftType == SYMBOL_FLOAT || rightType == SYMBOL_FLOAT) {
                 return SYMBOL_FLOAT;
             }
@@ -128,7 +124,6 @@ static SymbolType getExpressionType(Expression* expr) {
             return getExpressionType(expr->unary.expression);
             
         case EXPR_FUNCTION_CALL: {
-            // Built-in functions return int, user functions return int by default
             return SYMBOL_INTEGER;
         }
         
@@ -147,7 +142,6 @@ boolean CheckTypeImmediate_Constant(Constant* constant) {
         return false;
     }
     
-    // Constants are always valid by themselves
     return true;
 }
 
@@ -165,7 +159,6 @@ boolean CheckTypeImmediate_Expression(Expression* expr) {
         return false;
     }
     
-    // Additional checks based on expression type
     switch (expr->type) {
         case EXPR_IDENTIFIER: {
             SymbolEntry* entry = lookupSymbolInScope(expr->identifier);
@@ -191,7 +184,6 @@ boolean CheckTypeImmediate_Expression(Expression* expr) {
                 return false;
             }
             
-            // Check arguments
             ArgumentList* arg = expr->functionCall.arguments;
             while (arg) {
                 if (!CheckTypeImmediate_Expression(arg->expression)) {
@@ -298,7 +290,6 @@ boolean CheckTypeImmediate_Assignment(const char* identifier, Expression* expr) 
         return false;
     }
     
-    // Check if target variable exists
     SymbolEntry* target = lookupSymbolInScope(identifier);
     if (!target) {
         if (_logger) logError(_logger, "Assignment to undefined variable: %s", identifier);
@@ -310,7 +301,6 @@ boolean CheckTypeImmediate_Assignment(const char* identifier, Expression* expr) 
         return false;
     }
     
-    // Check expression type
     if (!CheckTypeImmediate_Expression(expr)) {
         return false;
     }
@@ -333,12 +323,10 @@ boolean CheckTypeImmediate_VariableDeclaration(TypeNode* type, const char* ident
         return false;
     }
     
-    // Check initialization condition if present
     if (initCondition && !CheckTypeImmediate_Condition(initCondition)) {
         return false;
     }
     
-    // If there's an initialization, check type compatibility
     if (initCondition && initCondition->type == COND_EXPRESSION) {
         SymbolType declaredType;
         switch (type->type) {
@@ -371,7 +359,6 @@ boolean CheckTypeImmediate_FunctionCall(const char* functionName, ArgumentList* 
         return false;
     }
     
-    // Check if function exists
     SymbolEntry* func = lookupSymbolInScope(functionName);
     if (!func) {
         if (_logger) logError(_logger, "Undefined function: %s", functionName);
@@ -383,7 +370,6 @@ boolean CheckTypeImmediate_FunctionCall(const char* functionName, ArgumentList* 
         return false;
     }
     
-    // Check all arguments
     ArgumentList* arg = arguments;
     int argCount = 0;
     while (arg) {
@@ -433,7 +419,6 @@ unsigned int CheckTypeCondition(Condition *c) {
     return CheckTypeImmediate_Condition(c) ? 1 : 0;
 }
 
-// Simplified versions of other functions for compatibility
 unsigned int CheckTypeArgumentList(ArgumentList *a) {
     while (a) {
         if (!CheckTypeImmediate_Expression(a->expression)) {
@@ -452,7 +437,7 @@ unsigned int CheckTypeFunctionIdentifier(FunctionIdentifier *f) {
         return (entry && entry->type == SYMBOL_FUNCTION) ? 1 : 0;
     }
     
-    return 1; // Built-in functions are always valid
+    return 1;
 }
 
 unsigned int CheckTypeVariableDeclaration(VariableDeclaration *v) {
@@ -471,11 +456,9 @@ unsigned int CheckTypeForInitializer(ForInitializer *fi) {
 }
 
 unsigned int CheckTypeForUpdate(ForUpdate *fu) {
-    // For updates are simple statements, we'll check them when they're created
     return 1;
 }
 
 unsigned int CheckTypeStatementList(StatementList *sl) {
-    // Statements are checked when created, so this is just a placeholder
     return 1;
 }

@@ -1,22 +1,17 @@
-// Invalid threading operations
 int no_return_function() {
     print(1);
-    // Missing return statement
 }
 
 int main() {
-    // Invalid thread function calls
-    thread();                           // Missing function argument
-    thread(5);                          // Invalid function argument
-    thread("not_a_function");          // String instead of function
-    thread(no_return_function, extra); // Too many arguments
+    thread();
+    thread(5);
+    thread("not_a_function");
+    thread(no_return_function, extra);
     
-    // Invalid thread operations
-    int thread_id = thread(no_return_function);  // Can't assign thread result
+    int thread_id = thread(no_return_function);
     
-    // Threading with invalid functions
-    thread(undefined_function);        // Undefined function
-    thread(main);                      // Threading main function
+    thread(undefined_function);
+    thread(main);
     
     return 0;
 }

@@ -1,4 +1,3 @@
-// Complex string handling and mixed type operations
 string message = "Hello World";
 string debug_msg = "Debug: ";
 int counter = 0;
@@ -8,7 +7,6 @@ boolean verbose = true;
 int log_function(string msg, int level) {
     if (verbose) {
         print(level);
-        // Simulating string concatenation through separate prints
         int newLevel = level + 1;
         return newLevel;
     }

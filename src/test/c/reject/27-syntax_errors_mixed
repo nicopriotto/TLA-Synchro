@@ -1,17 +1,13 @@
-// Mixed syntax errors
 int main() {
-    // Missing operators
-    int x = 5 10;           // Missing operator between numbers
-    int y = x 5;            // Missing operator
+    int x = 5 10;
+    int y = x 5;
     
-    // Invalid identifiers
-    int 2invalid = 5;       // Starts with number
-    int invalid-name = 10;  // Contains hyphen
-    int invalid.name = 15;  // Contains dot
+    int 2invalid = 5;
+    int invalid-name = 10;
+    int invalid.name = 15;
     
-    // Invalid literals
-    int hex = 0x123;        // Hexadecimal not supported
-    float scientific = 1e5; // Scientific notation not supported
+    int hex = 0x123;
+    float scientific = 1e5;
     string unterminated = "hello world;  // Unterminated string
     
     // Invalid comments

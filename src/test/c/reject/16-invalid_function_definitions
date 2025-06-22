@@ -1,27 +1,21 @@
-// Invalid function definitions
-// Missing return type
 invalid_function() {
     return 5;
 }
 
-// Invalid parameter syntax
 int bad_params(int, float, boolean) {
     return 0;
 }
 
-// Missing parameter list
 int no_params {
     return 1;
 }
 
-// Invalid return type
 invalid_type function_name() {
     return 0;
 }
 
-// Nested function definition (not allowed)
 int main() {
-    int nested_function() {  // Invalid: nested function
+    int nested_function() {
         return 42;
     }
     

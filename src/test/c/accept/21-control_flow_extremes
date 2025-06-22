@@ -1,4 +1,3 @@
-// Extreme control flow combinations
 int main() {
     int state = 0;
     boolean continue_loop = true;

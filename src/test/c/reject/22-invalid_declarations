@@ -1,30 +1,24 @@
-// Invalid variable and function declarations
-// Multiple main functions
 int main() {
     return 0;
 }
 
-int main() {  // Duplicate main function
+int main() {
     return 1;
 }
 
-// Invalid variable declarations
-int;                    // Missing identifier
-int 123invalid;         // Identifier starts with number
-int int;                // Reserved keyword as identifier
-int x, y, ;            // Missing identifier in list
+int;
+int 123invalid;
+int int;
+int x, y, ;
 
-// Invalid initializations
-int x = ;              // Missing initializer value
-int y = int;           // Invalid initializer
-boolean flag = 123;    // Type mismatch in initialization
+int x = ;
+int y = int;
+boolean flag = 123;
 
-// Invalid function declarations
-int function(int x, int x) {  // Duplicate parameter names
+int function(int x, int x) {
     return x;
 }
 
-// Invalid parameter types
 int bad_function(invalid_type param) {
     return 0;
 }

@@ -1,22 +1,17 @@
-// Using undeclared variables
 int main() {
-    // Using undeclared variable
     print(undeclared_var);
     
     int x = 5;
-    int y = undeclared_var + x;  // undeclared_var not defined
+    int y = undeclared_var + x;
     
-    // Using variable before declaration
     z = 10;
     int z;
     
-    // Using variable from different scope
     if (x > 0) {
         int local_var = 20;
     }
-    print(local_var);  // local_var out of scope
+    print(local_var);
     
-    // Function call with undeclared function
     int result = undefined_function(x, y);
     
     return result;
